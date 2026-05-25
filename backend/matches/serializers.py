@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Match, Message
 from datetime import timedelta
+import bleach
 
 User = get_user_model()
 
@@ -33,6 +34,11 @@ class MatchSerializer(serializers.ModelSerializer):
 
     def get_participants_count(self, obj):
         return obj.participants.count()
+
+    def validate_description(self, value):
+        if value:
+            return bleach.clean(value)
+        return value
 
     def validate(self, attrs):
         pitch = attrs.get('pitch')
@@ -90,6 +96,11 @@ class MatchCreateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'organizer', 'status']
 
+    def validate_description(self, value):
+        if value:
+            return bleach.clean(value)
+        return value
+
     def validate(self, attrs):
         pitch = attrs.get('pitch')
         if not pitch and self.instance:
@@ -144,3 +155,8 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'text', 'sender_name', 'sender_avatar', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+    def validate_text(self, value):
+        if value:
+            return bleach.clean(value)
+        return value

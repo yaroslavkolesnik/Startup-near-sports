@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from .models import Pitch
+import bleach
 
 class PitchSerializer(serializers.ModelSerializer):
     photos = serializers.SerializerMethodField()
@@ -28,6 +29,11 @@ class PitchSerializer(serializers.ModelSerializer):
                     url = request.build_absolute_uri(url)
                 photo_urls.append(url)
         return photo_urls
+
+    def validate_description(self, value):
+        if value:
+            return bleach.clean(value)
+        return value
 
     def validate(self, data):
         is_paid = data.get('is_paid')

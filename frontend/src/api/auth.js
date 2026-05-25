@@ -2,6 +2,73 @@ import * as SecureStore from 'expo-secure-store';
 
 const API_BASE_URL = 'http://192.168.0.67:8000/api';
 const TOKEN_KEY = 'jwt_access_token';
+const REFRESH_TOKEN_KEY = 'jwt_refresh_token';
+
+export const setRefreshToken = async (token) => {
+  try {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+  } catch (error) {
+    console.error("Error setting refresh token:", error);
+  }
+};
+
+export const getRefreshToken = async () => {
+  try {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  } catch (error) {
+    console.error("Error getting refresh token:", error);
+    return null;
+  }
+};
+
+export const removeRefreshToken = async () => {
+  try {
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  } catch (error) {
+    console.error("Error removing refresh token:", error);
+  }
+};
+
+export const fetchWithAuth = async (url, options = {}) => {
+  let token = await getToken();
+  
+  if (!options.headers) {
+    options.headers = {};
+  }
+  
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  let response = await fetch(url, options);
+
+  if (response.status === 401 && token) {
+    const refreshToken = await getRefreshToken();
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/token/refresh/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh: refreshToken })
+        });
+        
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          await setToken(data.access);
+          options.headers['Authorization'] = `Bearer ${data.access}`;
+          response = await fetch(url, options);
+        } else {
+          await removeToken();
+          await removeRefreshToken();
+        }
+      } catch (e) {
+        console.error("Token refresh error", e);
+      }
+    }
+  }
+
+  return response;
+};
 
 
 export const setToken = async (token) => {
@@ -46,7 +113,11 @@ export const login = async (username, password) => {
     throw new Error(errorData.detail || 'Неверный логин или пароль');
   }
 
-  return response.json();
+  const data = await response.json();
+  if (data.refresh) {
+    await setRefreshToken(data.refresh);
+  }
+  return data;
 };
 
 
@@ -85,11 +156,10 @@ export const getUserProfile = async () => {
   const token = await getToken();
   if (!token) throw new Error('Нет токена авторизации');
 
-  const response = await fetch(`${API_BASE_URL}/profile/`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/profile/`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
   });
 
@@ -110,15 +180,13 @@ export const updateUserProfile = async (data) => {
   if (!token) throw new Error('Нет токена авторизации');
 
   const isFormData = data instanceof FormData;
-  const headers = {
-    'Authorization': `Bearer ${token}`,
-  };
+  const headers = {};
 
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_BASE_URL}/profile/`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/profile/`, {
     method: 'PATCH',
     headers,
     body: isFormData ? data : JSON.stringify(data),

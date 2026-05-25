@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { login, register, getToken, setToken, removeToken, getUserProfile, updateUserProfile } from '../api/auth';
+import { login, register, getToken, setToken, removeToken, getUserProfile, updateUserProfile, removeRefreshToken } from '../api/auth';
 import { Alert } from 'react-native';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 
@@ -147,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       await removeToken();
+      await removeRefreshToken();
       setUserToken(null);
       setUser(null);
     } catch(e) {

@@ -1,5 +1,5 @@
 // React Native API service for matches
-import { getToken } from './auth';
+import { getToken, fetchWithAuth } from './auth';
 
 const API_BASE_URL = 'http://192.168.0.67:8000/api';
 
@@ -12,7 +12,7 @@ export const getMatches = async (sportType, searchQuery = '', isPaid = null) => 
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
         
-        const response = await fetch(url);
+        const response = await fetchWithAuth(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -26,7 +26,7 @@ export const getMatches = async (sportType, searchQuery = '', isPaid = null) => 
 
 export const getMatch = async (id) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/matches/${id}/`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${id}/`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -43,7 +43,7 @@ export const createMatch = async (matchData) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export const joinMatch = async (matchId) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/join/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/join/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export const leaveMatch = async (matchId) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/leave/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/leave/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const deleteMatch = async (matchId) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -144,7 +144,7 @@ export const updateMatch = async (matchId, matchData) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ export const getMyMatches = async (sportType, searchQuery = '', isPaid = null) =
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
 
-        const response = await fetch(url, {
+        const response = await fetchWithAuth(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -201,7 +201,7 @@ export const getMatchMessages = async (matchId) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/messages/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/messages/`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -225,7 +225,7 @@ export const sendMatchMessage = async (matchId, text) => {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
-        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/messages/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/messages/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

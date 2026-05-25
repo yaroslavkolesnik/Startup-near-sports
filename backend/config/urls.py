@@ -9,7 +9,7 @@ from rest_framework_simplejwt.views import (
 from users.views import RegisterView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('secure-admin-panel/', admin.site.urls),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

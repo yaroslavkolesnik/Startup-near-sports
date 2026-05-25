@@ -1,4 +1,4 @@
-import { getToken } from './auth';
+import { getToken, fetchWithAuth } from './auth';
 
 const API_BASE_URL = 'http://192.168.0.67:8000/api';
 
@@ -12,7 +12,7 @@ export const getPitches = async (sportType, searchQuery = '', surfaceType = null
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
         
-        const response = await fetch(url);
+        const response = await fetchWithAuth(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -26,7 +26,7 @@ export const getPitches = async (sportType, searchQuery = '', surfaceType = null
 
 export const getPitch = async (id) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/pitches/${id}/`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/pitches/${id}/`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -73,7 +73,7 @@ export const createPitch = async (pitchData, photos) => {
             options.headers['Content-Type'] = 'application/json';
         }
 
-        const response = await fetch(`${API_BASE_URL}/pitches/`, options);
+        const response = await fetchWithAuth(`${API_BASE_URL}/pitches/`, options);
         if (!response.ok) {
             let errorData;
             try {
@@ -104,7 +104,7 @@ export const getMyPitches = async (sportType, searchQuery = '', surfaceType = nu
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
 
-        const response = await fetch(url, {
+        const response = await fetchWithAuth(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -157,7 +157,7 @@ export const updatePitch = async (id, pitchData, photos) => {
             options.headers['Content-Type'] = 'application/json';
         }
 
-        const response = await fetch(`${API_BASE_URL}/pitches/${id}/`, options);
+        const response = await fetchWithAuth(`${API_BASE_URL}/pitches/${id}/`, options);
         if (!response.ok) {
             let errorData;
             try {
@@ -180,7 +180,7 @@ export const deletePitch = async (id) => {
         const token = await getToken();
         if (!token) throw new Error("No auth token");
 
-        const response = await fetch(`${API_BASE_URL}/pitches/${id}/`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/pitches/${id}/`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
