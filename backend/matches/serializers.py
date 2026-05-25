@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Match
+from .models import Match, Message
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -44,6 +45,39 @@ class MatchSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "sport_type": f"На этой площадке можно создать игру только по виду спорта: {pitch.get_sport_type_display()}."
                 })
+
+        start_time = attrs.get('start_time')
+        if not start_time and self.instance:
+            start_time = self.instance.start_time
+            
+        duration_minutes = attrs.get('duration_minutes')
+        if not duration_minutes and self.instance:
+            duration_minutes = self.instance.duration_minutes
+            
+        if start_time and duration_minutes and pitch:
+            new_end_time = start_time + timedelta(minutes=duration_minutes)
+            
+            active_matches = Match.objects.filter(
+                pitch=pitch,
+                status__in=['OPEN', 'FULL'],
+                start_time__date=start_time.date()
+            )
+            if self.instance:
+                active_matches = active_matches.exclude(id=self.instance.id)
+                
+            overlapping_count = 0
+            for existing_match in active_matches:
+                existing_start_time = existing_match.start_time
+                existing_end_time = existing_start_time + timedelta(minutes=existing_match.duration_minutes)
+                
+                if existing_start_time < new_end_time and existing_end_time > start_time:
+                    overlapping_count += 1
+                    
+            if overlapping_count >= pitch.fields_count:
+                raise serializers.ValidationError({
+                    "non_field_errors": "К сожалению, все поля на этой площадке заняты на выбранное время."
+                })
+
         return attrs
 
 class MatchCreateSerializer(serializers.ModelSerializer):
@@ -58,10 +92,55 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         pitch = attrs.get('pitch')
+        if not pitch and self.instance:
+            pitch = self.instance.pitch
+
         sport_type = attrs.get('sport_type')
-        if pitch and sport_type:
+        if sport_type and pitch:
             if pitch.sport_type != 'MULTI' and pitch.sport_type != sport_type:
                 raise serializers.ValidationError({
                     "sport_type": f"На этой площадке можно создать игру только по виду спорта: {pitch.get_sport_type_display()}."
                 })
+
+        start_time = attrs.get('start_time')
+        if not start_time and self.instance:
+            start_time = self.instance.start_time
+            
+        duration_minutes = attrs.get('duration_minutes')
+        if not duration_minutes and self.instance:
+            duration_minutes = self.instance.duration_minutes
+            
+        if start_time and duration_minutes and pitch:
+            new_end_time = start_time + timedelta(minutes=duration_minutes)
+            
+            active_matches = Match.objects.filter(
+                pitch=pitch,
+                status__in=['OPEN', 'FULL'],
+                start_time__date=start_time.date()
+            )
+            if self.instance:
+                active_matches = active_matches.exclude(id=self.instance.id)
+                
+            overlapping_count = 0
+            for existing_match in active_matches:
+                existing_start_time = existing_match.start_time
+                existing_end_time = existing_start_time + timedelta(minutes=existing_match.duration_minutes)
+                
+                if existing_start_time < new_end_time and existing_end_time > start_time:
+                    overlapping_count += 1
+                    
+            if overlapping_count >= pitch.fields_count:
+                raise serializers.ValidationError({
+                    "non_field_errors": "К сожалению, все поля на этой площадке заняты на выбранное время."
+                })
+
         return attrs
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.username', read_only=True)
+    sender_avatar = serializers.ImageField(source='sender.avatar', read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ['id', 'text', 'sender_name', 'sender_avatar', 'created_at']
+        read_only_fields = ['id', 'created_at']

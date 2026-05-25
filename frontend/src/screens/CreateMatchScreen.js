@@ -67,7 +67,33 @@ export default function CreateMatchScreen({ route, navigation }) {
             Alert.alert(t('success'), t('success_create_match'));
             navigation.popToTop(); // Return to main screen (Map, since it's first in stack)
         } catch (error) {
-            Alert.alert(t('error'), error.message || t('error_create_match'));
+            let isValidationError = false;
+            let backendError = null;
+
+            // Handle Axios-like response object or stringified JSON from fetch
+            if (error.response && error.response.status === 400) {
+                isValidationError = true;
+                backendError = error.response.data?.non_field_errors?.[0] || error.response.data?.error;
+            } else {
+                try {
+                    const parsed = JSON.parse(error.message);
+                    if (parsed.non_field_errors || parsed.error) {
+                        isValidationError = true;
+                        backendError = parsed.non_field_errors?.[0] || parsed.error;
+                    }
+                } catch (e) {}
+            }
+
+            if (isValidationError) {
+                Alert.alert(
+                    t('error_title'), 
+                    backendError || t('error_time_taken')
+                );
+                return;
+            }
+
+            // Дефолтный вывод ошибки (Default error fallback)
+            Alert.alert(t('error_title'), error.message || t('error_create_match'));
         } finally {
             setLoading(false);
         }

@@ -200,5 +200,11 @@
   "already_have_account": "Вже є акаунт? ",
   "error_username_empty": "Ім'я користувача не може бути порожнім",
   "username_label": "Ім'я користувача",
-  "skill_level_label": "Рівень навичок:"
+  "skill_level_label": "Рівень навичок:",
+  "fields_count_label": "Кількість полів на майданчику",
+  "error_title": "Помилка",
+  "error_time_taken": "На жаль, вибраний час зайнятий. Спробуйте вибрати інший час.",
+  "chat_title": "Чат матчу",
+  "send_msg_placeholder": "Введіть повідомлення...",
+  "open_match_chat": "Відкрити чат матчу"
 }

@@ -1,11 +1,13 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import permissions
 from django.db.models import Q
-from .models import Match
-from .serializers import MatchSerializer, MatchCreateSerializer
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
+from .models import Match, Message
+from .serializers import MatchSerializer, MatchCreateSerializer, MessageSerializer
 from .utils import send_expo_push_notification
 
 class IsOrganizerOrReadOnly(permissions.BasePermission):
@@ -129,3 +131,31 @@ class MatchViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response({"data": serializer.data})
+
+class MatchMessageListCreateView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        match_id = self.kwargs['match_id']
+        return Message.objects.filter(match_id=match_id).order_by('created_at')
+
+    def check_match_access(self, match):
+        user = self.request.user
+        if user not in match.participants.all() and user != match.organizer:
+            raise PermissionDenied("Только участники могут получать доступ к чату.")
+
+    def list(self, request, *args, **kwargs):
+        match_id = self.kwargs['match_id']
+        match = get_object_or_404(Match, id=match_id)
+        self.check_match_access(match)
+        
+        response = super().list(request, *args, **kwargs)
+        # Wrap response in 'data' object like the rest of the APIs
+        return Response({"data": response.data})
+
+    def perform_create(self, serializer):
+        match_id = self.kwargs['match_id']
+        match = get_object_or_404(Match, id=match_id)
+        self.check_match_access(match)
+        serializer.save(match=match, sender=self.request.user)

@@ -22,6 +22,7 @@ export default function CreatePitchScreen({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState('');
+  const [fieldsCount, setFieldsCount] = useState('1');
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -54,6 +55,7 @@ export default function CreatePitchScreen({ navigation }) {
 
     setIsSubmitting(true);
     try {
+      const parsedFieldsCount = parseInt(fieldsCount, 10) || 1;
       const pitchData = {
         title,
         address,
@@ -64,6 +66,7 @@ export default function CreatePitchScreen({ navigation }) {
         description,
         is_paid: isPaid,
         price_per_hour: isPaid ? parseFloat(price) : null,
+        fields_count: parsedFieldsCount,
       };
 
       await createPitch(pitchData, photos);
@@ -160,6 +163,15 @@ export default function CreatePitchScreen({ navigation }) {
             />
           </View>
         )}
+
+        <Text style={styles.sectionTitle}>{t('fields_count_label')}</Text>
+        <TextInput 
+          style={styles.input} 
+          value={fieldsCount} 
+          onChangeText={setFieldsCount} 
+          placeholder={t('fields_count_label')} 
+          keyboardType="numeric" 
+        />
 
         <Text style={styles.sectionTitle}>{t('description_optional_label')}</Text>
         <TextInput 

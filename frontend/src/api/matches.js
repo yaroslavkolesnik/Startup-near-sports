@@ -19,7 +19,7 @@ export const getMatches = async (sportType, searchQuery = '', isPaid = null) => 
         const json = await response.json();
         return json.data;
     } catch (error) {
-        console.error("Error fetching matches:", error);
+        console.log("Error fetching matches:", error);
         throw error;
     }
 };
@@ -33,7 +33,7 @@ export const getMatch = async (id) => {
         const json = await response.json();
         return json.data || json;
     } catch (error) {
-        console.error("Error fetching match:", error);
+        console.log("Error fetching match:", error);
         throw error;
     }
 };
@@ -58,7 +58,7 @@ export const createMatch = async (matchData) => {
         }
         return json.data || json;
     } catch (error) {
-        console.error("Error creating match:", error);
+        console.log("Error creating match:", error);
         throw error;
     }
 };
@@ -81,7 +81,7 @@ export const joinMatch = async (matchId) => {
         }
         return json;
     } catch (error) {
-        console.error("Error joining match:", error);
+        console.log("Error joining match:", error);
         throw error;
     }
 };
@@ -104,7 +104,7 @@ export const leaveMatch = async (matchId) => {
         }
         return json;
     } catch (error) {
-        console.error("Error leaving match:", error);
+        console.log("Error leaving match:", error);
         throw error;
     }
 };
@@ -134,7 +134,7 @@ export const deleteMatch = async (matchId) => {
         }
         return true;
     } catch (error) {
-        console.error("Error deleting match:", error);
+        console.log("Error deleting match:", error);
         throw error;
     }
 };
@@ -160,7 +160,7 @@ export const updateMatch = async (matchId, matchData) => {
         }
         return json.data || json;
     } catch (error) {
-        console.error("Error updating match:", error);
+        console.log("Error updating match:", error);
         throw error;
     }
 };
@@ -191,7 +191,57 @@ export const getMyMatches = async (sportType, searchQuery = '', isPaid = null) =
         const json = await response.json();
         return json.data || json;
     } catch (error) {
-        console.error("Error fetching my matches:", error);
+        console.log("Error fetching my matches:", error);
+        throw error;
+    }
+};
+
+export const getMatchMessages = async (matchId) => {
+    try {
+        const token = await getToken();
+        if (!token) throw new Error('Нет токена авторизации');
+        
+        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/messages/`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const json = await response.json();
+        return json.data || json;
+    } catch (error) {
+        console.log("Error fetching messages:", error);
+        throw error;
+    }
+};
+
+export const sendMatchMessage = async (matchId, text) => {
+    try {
+        const token = await getToken();
+        if (!token) throw new Error('Нет токена авторизации');
+        
+        const response = await fetch(`${API_BASE_URL}/matches/${matchId}/messages/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ text }),
+        });
+        
+        const json = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(json.error || json.message || `HTTP error! status: ${response.status}`);
+        }
+        return json;
+    } catch (error) {
+        console.log("Error sending message:", error);
         throw error;
     }
 };

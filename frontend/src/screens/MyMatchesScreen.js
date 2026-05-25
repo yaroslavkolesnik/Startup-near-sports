@@ -138,7 +138,13 @@ export default function MyMatchesScreen({ navigation }) {
                 startTime={item.start_time} 
               />
             )}
-            <TouchableOpacity onPress={() => handleShareMatch(item)} style={styles.shareButton}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('MatchChat', { matchId: item.id, matchTitle: item.title || t(item.sport_type) })} 
+              style={styles.actionIconButton}
+            >
+              <MaterialIcons name="forum" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleShareMatch(item)} style={styles.actionIconButton}>
               <Ionicons name="share-outline" size={24} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -317,9 +323,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  shareButton: {
+  actionIconButton: {
     padding: 4,
-    marginLeft: 8,
+    marginLeft: 12,
   },
   title: {
     color: colors.text,

@@ -16,6 +16,7 @@ import EditPitchScreen from '../screens/EditPitchScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
+import MatchChatScreen from '../screens/MatchChatScreen';
 import { AuthContext } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
@@ -141,6 +142,11 @@ export default function AppNavigator() {
         name="PublicProfile" 
         component={PublicProfileScreen} 
         options={{ title: t('nav_public_profile') }} 
+      />
+      <Stack.Screen 
+        name="MatchChat" 
+        component={MatchChatScreen} 
+        options={{ title: t('chat_title', 'Чат') }} 
       />
     </Stack.Navigator>
   );

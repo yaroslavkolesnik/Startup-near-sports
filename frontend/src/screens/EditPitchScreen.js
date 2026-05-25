@@ -23,6 +23,7 @@ export default function EditPitchScreen({ route, navigation }) {
   const [photos, setPhotos] = useState(pitch.photos || []);
   const [photosUpdated, setPhotosUpdated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldsCount, setFieldsCount] = useState(pitch.fields_count ? String(pitch.fields_count) : '1');
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -53,6 +54,7 @@ export default function EditPitchScreen({ route, navigation }) {
 
     setIsSubmitting(true);
     try {
+      const parsedFieldsCount = parseInt(fieldsCount, 10) || 1;
       const pitchData = {
         title,
         address,
@@ -61,6 +63,7 @@ export default function EditPitchScreen({ route, navigation }) {
         sport_type: sportType,
         surface_type: surfaceType,
         description,
+        fields_count: parsedFieldsCount,
       };
 
       await updatePitch(pitch.id, pitchData, photosUpdated ? photos : null);
@@ -140,6 +143,15 @@ export default function EditPitchScreen({ route, navigation }) {
             <Picker.Item label={t('surface_sand_full')} value="SAND" color="#000000" />
           </Picker>
         </View>
+
+        <Text style={styles.sectionTitle}>{t('fields_count_label')}</Text>
+        <TextInput 
+          style={styles.input} 
+          value={fieldsCount} 
+          onChangeText={setFieldsCount} 
+          placeholder={t('fields_count_label')} 
+          keyboardType="numeric" 
+        />
 
         <Text style={styles.sectionTitle}>{t('description_optional_label')}</Text>
         <TextInput 

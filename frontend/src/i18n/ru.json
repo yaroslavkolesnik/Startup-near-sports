@@ -200,5 +200,11 @@
   "already_have_account": "Уже есть аккаунт? ",
   "error_username_empty": "Имя пользователя не может быть пустым",
   "username_label": "Имя пользователя",
-  "skill_level_label": "Уровень навыков:"
+  "skill_level_label": "Уровень навыков:",
+  "fields_count_label": "Количество полей на площадке",
+  "error_title": "Ошибка",
+  "error_time_taken": "К сожалению, выбранное время занято. Попробуйте выбрать другое время.",
+  "chat_title": "Чат матча",
+  "send_msg_placeholder": "Введите сообщение...",
+  "open_match_chat": "Открыть чат матча"
 }

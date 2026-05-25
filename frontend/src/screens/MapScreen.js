@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, ScrollView, Keyboard } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import { Marker, Callout } from 'react-native-maps';
+import MapView from "react-native-map-clustering";
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -231,6 +232,7 @@ export default function MapScreen({ navigation }) {
         initialRegion={region}
         showsUserLocation={true}
         mapPadding={{ top: 110, right: 0, bottom: 0, left: 0 }}
+        clusterColor={colors.primary}
       >
         {pitches.map((pitch) => {
           // Protection against bad data

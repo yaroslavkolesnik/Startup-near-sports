@@ -240,6 +240,17 @@ export default function MatchDetailsScreen({ route, navigation }) {
         </TouchableOpacity>
       )}
 
+      {(isUserParticipant || isOrganizer) && (
+        <TouchableOpacity 
+          style={styles.internalChatButton} 
+          onPress={() => navigation.navigate('MatchChat', { matchId: match.id, matchTitle: match.title || t(match.sport_type) })}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="forum" size={20} color="#FFF" style={{marginRight: 8}} />
+          <Text style={styles.internalChatButtonText}>{t('open_match_chat', 'Открыть чат матча')}</Text>
+        </TouchableOpacity>
+      )}
+
       {match?.pitch_is_paid && (
         <View style={styles.paidWarningContainer}>
           <Text style={styles.paidWarningText}>
@@ -404,6 +415,25 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     color: colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  internalChatButton: {
+    backgroundColor: '#34C759',
+    flexDirection: 'row',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    shadowColor: '#34C759',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  internalChatButtonText: {
+    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -60,3 +60,16 @@ class Match(models.Model):
 
     def __str__(self):
         return self.title
+
+class Message(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sent_messages'
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message by {self.sender.username} in {self.match.title}"

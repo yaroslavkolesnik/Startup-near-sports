@@ -200,5 +200,11 @@
   "already_have_account": "Already have an account? ",
   "error_username_empty": "Username cannot be empty",
   "username_label": "Username",
-  "skill_level_label": "Skill level:"
+  "skill_level_label": "Skill level:",
+  "fields_count_label": "Number of fields on the pitch",
+  "error_title": "Error",
+  "error_time_taken": "Unfortunately, the selected time is taken. Please choose another time.",
+  "chat_title": "Match Chat",
+  "send_msg_placeholder": "Type a message...",
+  "open_match_chat": "Open Match Chat"
 }

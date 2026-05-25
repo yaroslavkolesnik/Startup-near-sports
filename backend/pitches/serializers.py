@@ -11,7 +11,7 @@ class PitchSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'latitude', 'longitude', 'address', 
             'sport_type', 'surface_type', 'photos', 'created_by', 'creator_name', 'is_verified', 
-            'is_paid', 'price_per_hour', 'created_at', 'updated_at'
+            'is_paid', 'price_per_hour', 'fields_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at', 'photos']
 
