@@ -4,8 +4,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { SPORT_KEYS, getSportName } from '../config/sports';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 export default function EditProfileScreen({ navigation }) {
   const { t } = useTranslation();
@@ -118,11 +120,9 @@ export default function EditProfileScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('username_label')}</Text>
-        <TextInput
-          style={styles.input}
+        <Input
+          label={t('username_label')}
           placeholder={t('username_placeholder')}
-          placeholderTextColor={colors.textSecondary}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -173,18 +173,13 @@ export default function EditProfileScreen({ navigation }) {
           </View>
         )}
 
-        <TouchableOpacity 
-          style={styles.button} 
+        <Button 
+          title={t('save_changes_btn')}
           onPress={handleSave}
+          loading={isSaving}
           disabled={isSaving}
-          activeOpacity={0.8}
-        >
-          {isSaving ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.buttonText}>{t('save_changes_btn')}</Text>
-          )}
-        </TouchableOpacity>
+          style={{ marginTop: 8 }}
+        />
       </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -194,7 +189,7 @@ export default function EditProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     justifyContent: 'flex-start',
     paddingTop: 24,
   },
@@ -219,22 +214,10 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   sectionTitle: {
-    fontSize: 16,
-    color: colors.text,
+    ...theme.typography.labelMedium,
+    color: theme.colors.textSecondary,
     marginTop: 8,
     marginBottom: 12,
-    fontWeight: 'bold',
-  },
-  input: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 16,
-    fontSize: 16,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   skillContainer: {
     flexDirection: 'row',
@@ -245,22 +228,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.md,
     alignItems: 'center',
     marginHorizontal: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
   },
   skillButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
   },
   skillButtonText: {
-    color: colors.textSecondary,
-    fontWeight: '600',
+    ...theme.typography.labelSmall,
+    color: theme.colors.textSecondary,
   },
   skillButtonTextActive: {
-    color: colors.surface,
+    color: theme.colors.textInverse,
   },
   dynamicSkillContainer: {
     marginBottom: 16,
@@ -273,39 +256,22 @@ const styles = StyleSheet.create({
   sportBadge: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: theme.radii.pill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
     marginRight: 8,
     marginBottom: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
   },
   sportBadgeActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
   },
   sportBadgeText: {
-    color: colors.textSecondary,
-    fontWeight: '600',
+    ...theme.typography.labelSmall,
+    color: theme.colors.textSecondary,
   },
   sportBadgeTextActive: {
-    color: colors.surface,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  buttonText: {
-    color: colors.surface,
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: theme.colors.textInverse,
   },
 });

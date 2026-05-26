@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { useTranslation } from 'react-i18next';
 
 import { PITCH_SPORTS, SPORTS, SportIcon } from '../config/sports';
@@ -37,7 +37,7 @@ export default function SportFilter({ selectedSport, onSelectSport, style, exclu
                  <Text style={[styles.text, isActive && styles.activeText]}>{option.label}</Text>
               ) : (
                  <View style={styles.chipContent}>
-                   <SportIcon sport={option.value} size={16} color={isActive ? '#FFFFFF' : colors.textSecondary} style={styles.icon} />
+                   <SportIcon sport={option.value} size={16} color={isActive ? '#FFFFFF' : theme.colors.textSecondary} style={styles.icon} />
                    <Text style={[styles.text, isActive && styles.activeText]}>
                      {option.label}
                    </Text>
@@ -90,10 +90,10 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.surface || '#ffffff',
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: colors.border || '#e0e0e0',
+    borderColor: theme.colors.border,
     marginRight: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -102,16 +102,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeChip: {
-    backgroundColor: colors.primary || '#007AFF',
-    borderColor: colors.primary || '#007AFF',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   text: {
-    fontSize: 14,
-    color: colors.textSecondary || '#666666',
-    fontWeight: '500',
+    ...theme.typography.labelMedium,
+    color: theme.colors.textSecondary,
   },
   activeText: {
-    color: '#FFFFFF',
+    color: theme.colors.textInverse,
   },
   chipContent: {
     flexDirection: 'row',
@@ -130,19 +129,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    backgroundColor: '#EEEEEE',
+    backgroundColor: theme.colors.surfaceContainer,
     marginHorizontal: 4,
-    borderRadius: 8,
+    borderRadius: theme.radii.md,
   },
   activePaymentChip: {
-    backgroundColor: colors.primary || '#007AFF',
+    backgroundColor: theme.colors.primary,
   },
   paymentText: {
-    fontSize: 13,
-    color: '#666666',
-    fontWeight: 'bold',
+    ...theme.typography.labelSmall,
+    color: theme.colors.textSecondary,
   },
   activePaymentText: {
-    color: '#FFFFFF',
+    color: theme.colors.textInverse,
   },
 });

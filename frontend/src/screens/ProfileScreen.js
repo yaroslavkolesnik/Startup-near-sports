@@ -4,8 +4,10 @@ import ImageView from "react-native-image-viewing";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { getSportName, SportIcon } from '../config/sports';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 export default function ProfileScreen({ navigation }) {
   const { user, signOut, isLoading } = useContext(AuthContext);
@@ -15,7 +17,7 @@ export default function ProfileScreen({ navigation }) {
   if (isLoading || !user) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -33,13 +35,13 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <View style={styles.profileHeader}>
           <TouchableOpacity activeOpacity={0.8} onPress={() => user.avatar && setIsGalleryVisible(true)}>
             {user.avatar ? (
               <Image source={{ uri: getAvatarUrl(user.avatar) }} style={styles.profileAvatar} />
             ) : (
-              <MaterialIcons name="account-circle" size={100} color={colors.primary} style={styles.profileAvatarPlaceholder} />
+              <MaterialIcons name="account-circle" size={100} color={theme.colors.primary} style={styles.profileAvatarPlaceholder} />
             )}
           </TouchableOpacity>
           <Text style={styles.username}>{(user.username || '').replace(/_/g, ' ')}</Text>
@@ -61,9 +63,9 @@ export default function ProfileScreen({ navigation }) {
                   <View key={index} style={styles.sportRow}>
                     <View style={styles.sportRowLeft}>
                       {SportIcon ? (
-                        <SportIcon sport={sport} size={24} color={colors.primary} style={styles.sportIcon} />
+                        <SportIcon sport={sport} size={24} color={theme.colors.primary} style={styles.sportIcon} />
                       ) : (
-                        <Ionicons name="fitness-outline" size={24} color={colors.primary} style={styles.sportIcon} />
+                        <Ionicons name="fitness-outline" size={24} color={theme.colors.primary} style={styles.sportIcon} />
                       )}
                       {/* Если getSportName возвращает русский текст, лучше заменить на t(sport) */}
                       <Text style={styles.sportNameText}>{t(sport)}</Text>
@@ -81,22 +83,21 @@ export default function ProfileScreen({ navigation }) {
             )}
           </View>
         </View>
-      </View>
+      </Card>
 
       <View style={styles.actionsContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.primaryButton]}
+        <Button 
+          title={t('edit_profile')}
           onPress={() => navigation.navigate('EditProfile')}
-        >
-          <Text style={styles.primaryButtonText}>{t('edit_profile')}</Text>
-        </TouchableOpacity>
+          style={{ marginBottom: 12 }}
+        />
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.secondaryButton]}
+        <Button 
+          title={t('my_games')}
+          variant="secondary"
           onPress={() => navigation.navigate('MyMatches')}
-        >
-          <Text style={styles.secondaryButtonText}>{t('my_games')}</Text>
-        </TouchableOpacity>
+          style={{ marginBottom: 12 }}
+        />
 
         <TouchableOpacity style={styles.logoutMinimalButton} onPress={signOut}>
           <Ionicons name="log-out-outline" size={22} color="#FF3B30" style={{ marginRight: 6 }} />
@@ -141,7 +142,7 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
@@ -150,20 +151,12 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 24,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
   },
   profileHeader: {
     alignItems: 'center',
@@ -180,27 +173,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   username: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: colors.text,
+    ...theme.typography.headlineMedium,
+    color: theme.colors.text,
     marginBottom: 6,
     textAlign: 'center',
   },
   email: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    ...theme.typography.bodyMedium,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   section: {
     marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    ...theme.typography.labelLarge,
+    color: theme.colors.textSecondary,
     marginBottom: 12,
     textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 0.5,
   },
   sportsVerticalContainer: {
     marginTop: 4,
@@ -211,7 +201,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   sportRowLeft: {
     flexDirection: 'row',
@@ -221,53 +211,28 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   sportNameText: {
-    fontSize: 17,
-    color: colors.text,
+    ...theme.typography.bodyLarge,
+    color: theme.colors.text,
     fontWeight: '500',
   },
   skillBadge: {
-    backgroundColor: '#F3F4F6', // Light gray
+    backgroundColor: theme.colors.surfaceContainer, // Light gray
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: theme.radii.pill,
   },
   skillBadgeText: {
-    color: '#374151', // Dark gray text
-    fontSize: 13,
-    fontWeight: '600',
+    ...theme.typography.labelSmall,
+    color: theme.colors.textSecondary,
   },
   noDataText: {
-    color: colors.textSecondary,
+    ...theme.typography.bodyMedium,
+    color: theme.colors.textSecondary,
     fontStyle: 'italic',
     paddingVertical: 10,
   },
   actionsContainer: {
     marginTop: 'auto',
-  },
-  actionButton: {
-    height: 52,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.border, // Or colors.primary if you want colored outline
-  },
-  secondaryButtonText: {
-    color: colors.text, // Or colors.primary
-    fontSize: 16,
-    fontWeight: '600',
   },
   logoutMinimalButton: {
     flexDirection: 'row',
@@ -278,19 +243,17 @@ const styles = StyleSheet.create({
   },
   logoutMinimalText: {
     color: '#FF3B30',
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.labelLarge,
   },
   languageSection: {
     marginTop: 24,
     alignItems: 'center',
   },
   languageTitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    ...theme.typography.labelMedium,
+    color: theme.colors.textSecondary,
     marginBottom: 12,
     textTransform: 'uppercase',
-    fontWeight: '600',
   },
   languageButtonsContainer: {
     flexDirection: 'row',
@@ -300,19 +263,18 @@ const styles = StyleSheet.create({
   langButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
   },
   langButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   langButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    ...theme.typography.labelMedium,
+    color: theme.colors.textSecondary,
   },
   langButtonTextActive: {
     color: '#FFF',

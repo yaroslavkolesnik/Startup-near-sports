@@ -18,8 +18,9 @@ import RegisterScreen from '../screens/RegisterScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
 import MatchChatScreen from '../screens/MatchChatScreen';
 import { AuthContext } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,18 +29,32 @@ function MainTabs() {
   const { t } = useTranslation();
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: theme.colors.surface,
         },
-        headerTintColor: colors.text,
+        headerTitleStyle: {
+          ...theme.typography.headlineSmall,
+        },
+        headerTintColor: theme.colors.text,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.surfaceContainer,
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-      }}
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === 'Map') {
+            iconName = focused ? 'map' : 'map-outline';
+          } else if (route.name === 'Matches') {
+            iconName = focused ? 'football' : 'football-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen 
         name="Map" 
@@ -75,8 +90,8 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -87,9 +102,12 @@ export default function AppNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: theme.colors.surface,
         },
-        headerTintColor: colors.text,
+        headerTitleStyle: {
+          ...theme.typography.headlineSmall,
+        },
+        headerTintColor: theme.colors.text,
         headerBackTitleVisible: false,
       }}
     >

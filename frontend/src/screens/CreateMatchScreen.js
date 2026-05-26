@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { createMatch } from '../api/matches';
 import { SPORT_KEYS } from '../config/sports';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 export default function CreateMatchScreen({ route, navigation }) {
     const { t } = useTranslation();
@@ -106,11 +108,9 @@ export default function CreateMatchScreen({ route, navigation }) {
             keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
         >
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Text style={styles.label}>{t('match_name_label')}</Text>
-                <TextInput
-                    style={styles.input}
+                <Input
+                    label={t('match_name_label')}
                     placeholder={t('match_name_placeholder')}
-                    placeholderTextColor={colors.textSecondary}
                     value={title}
                     onChangeText={setTitle}
                 />
@@ -152,21 +152,17 @@ export default function CreateMatchScreen({ route, navigation }) {
                     ))}
                 </View>
 
-                <Text style={styles.label}>{t('max_players_label')}</Text>
-                <TextInput
-                    style={styles.input}
+                <Input
+                    label={t('max_players_label')}
                     placeholder={t('max_players_placeholder')}
-                    placeholderTextColor={colors.textSecondary}
                     keyboardType="numeric"
                     value={maxPlayers}
                     onChangeText={setMaxPlayers}
                 />
 
-                <Text style={styles.label}>{t('duration_label')}</Text>
-                <TextInput
-                    style={styles.input}
+                <Input
+                    label={t('duration_label')}
                     placeholder="90"
-                    placeholderTextColor={colors.textSecondary}
                     keyboardType="numeric"
                     value={durationMinutes}
                     onChangeText={setDurationMinutes}
@@ -208,38 +204,31 @@ export default function CreateMatchScreen({ route, navigation }) {
                     </View>
                 )}
 
-                <Text style={styles.label}>{t('chat_link_label')}</Text>
-                <TextInput
-                    style={styles.input}
+                <Input
+                    label={t('chat_link_label')}
                     placeholder={t('chat_link_placeholder')}
-                    placeholderTextColor={colors.textSecondary}
                     value={externalChatLink}
                     onChangeText={setExternalChatLink}
                     autoCapitalize="none"
                 />
 
-                <Text style={styles.label}>{t('description_optional_label')}</Text>
-                <TextInput
-                    style={[styles.input, styles.textArea]}
+                <Input
+                    label={t('description_optional_label')}
+                    style={styles.textArea}
                     multiline={true}
                     numberOfLines={4}
                     placeholder={t('match_description_placeholder')}
-                    placeholderTextColor={colors.textSecondary}
                     value={description}
                     onChangeText={setDescription}
                 />
 
-                <TouchableOpacity 
-                    style={styles.submitButton} 
+                <Button 
+                    title={t('create_game_btn')}
                     onPress={handleSubmit}
+                    loading={loading}
                     disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <Text style={styles.submitButtonText}>{t('create_game_btn')}</Text>
-                    )}
-                </TouchableOpacity>
+                    style={{ marginTop: 20, marginBottom: 20 }}
+                />
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -248,26 +237,16 @@ export default function CreateMatchScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: theme.colors.background,
     },
     scrollContainer: {
         padding: 20,
     },
     label: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: colors.text,
-        marginBottom: 8,
+        ...theme.typography.labelMedium,
+        color: theme.colors.textSecondary,
+        marginBottom: theme.spacing.sm,
         marginTop: 16,
-    },
-    input: {
-        backgroundColor: colors.surface,
-        borderRadius: 8,
-        padding: 14,
-        color: colors.text,
-        borderWidth: 1,
-        borderColor: colors.border,
-        fontSize: 16,
     },
     textArea: {
         minHeight: 100,
@@ -279,9 +258,9 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     badge: {
-        backgroundColor: colors.surface,
+        backgroundColor: theme.colors.surface,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: theme.colors.border,
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 20,
@@ -289,34 +268,21 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     badgeSelected: {
-        backgroundColor: colors.primary,
-        borderColor: colors.primary,
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     badgeText: {
-        color: colors.textSecondary,
+        color: theme.colors.textSecondary,
         fontWeight: '600',
     },
     badgeTextSelected: {
         color: '#FFF',
     },
-    submitButton: {
-        backgroundColor: colors.primary,
-        borderRadius: 8,
-        padding: 16,
-        alignItems: 'center',
-        marginTop: 30,
-        marginBottom: 20,
-    },
-    submitButtonText: {
-        color: '#FFF',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
     iosPickerContainer: {
-        backgroundColor: colors.surface,
+        backgroundColor: theme.colors.surface,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: theme.colors.border,
         padding: 8,
         alignItems: 'flex-start',
     },
@@ -329,16 +295,16 @@ const styles = StyleSheet.create({
     },
     pickerButton: {
         flex: 1,
-        backgroundColor: colors.surface,
+        backgroundColor: theme.colors.surface,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: theme.colors.border,
         padding: 14,
         marginHorizontal: 4,
         alignItems: 'center',
     },
     pickerButtonText: {
-        color: colors.text,
+        color: theme.colors.text,
         fontSize: 16,
     },
 });

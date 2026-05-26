@@ -2,9 +2,11 @@ import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Linking, Modal, FlatList, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { AuthContext } from '../context/AuthContext';
 import { joinMatch, leaveMatch, deleteMatch } from '../api/matches';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 export default function MatchDetailsScreen({ route, navigation }) {
   const { t } = useTranslation();
@@ -119,77 +121,65 @@ export default function MatchDetailsScreen({ route, navigation }) {
     if (isOrganizer) {
       return (
         <View>
-          <TouchableOpacity 
-            style={[styles.joinButton, { backgroundColor: '#007AFF' }]} 
+          <Button 
+            title={t('edit_match')}
             onPress={() => navigation.navigate('EditMatch', { match })}
             disabled={isJoining}
-          >
-            <Text style={styles.joinButtonText}>{t('edit_match')}</Text>
-          </TouchableOpacity>
+            style={{ marginBottom: 10 }}
+          />
           
-          <TouchableOpacity 
-            style={[styles.joinButton, { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#FF3B30', marginTop: 10 }]} 
+          <Button 
+            title={t('delete_match')}
+            variant="secondary"
             onPress={handleDelete}
             disabled={isJoining}
-            activeOpacity={0.8}
-          >
-            {isJoining ? (
-              <ActivityIndicator color={'#FF3B30'} />
-            ) : (
-              <Text style={[styles.joinButtonText, { color: '#FF3B30' }]}>{t('delete_match')}</Text>
-            )}
-          </TouchableOpacity>
+            loading={isJoining}
+            style={{ borderColor: '#FF3B30', marginTop: 10 }}
+            textStyle={{ color: '#FF3B30' }}
+          />
         </View>
       );
     }
 
     if (isUserParticipant) {
         return (
-          <TouchableOpacity 
-            style={[styles.joinButton, { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#FF3B30' }]} 
-            onPress={handleLeave} 
+          <Button 
+            title={t('cancel_participation')}
+            variant="secondary"
+            onPress={handleLeave}
             disabled={isJoining}
-            activeOpacity={0.8}
-          >
-            {isJoining ? (
-              <ActivityIndicator color={'#FF3B30'} />
-            ) : (
-              <Text style={[styles.joinButtonText, { color: '#FF3B30' }]}>{t('cancel_participation')}</Text>
-            )}
-          </TouchableOpacity>
+            loading={isJoining}
+            style={{ borderColor: '#FF3B30', marginBottom: 10 }}
+            textStyle={{ color: '#FF3B30' }}
+          />
         );
     }
 
     if (isFull) {
         return (
-          <TouchableOpacity 
-            style={[styles.joinButton, { backgroundColor: '#A1A1AA' }]} 
+          <Button 
+            title={t('no_spots')}
             disabled={true}
-          >
-            <Text style={styles.joinButtonText}>{t('no_spots')}</Text>
-          </TouchableOpacity>
+            style={{ backgroundColor: '#A1A1AA', marginBottom: 10, borderWidth: 0 }}
+          />
         );
     }
 
     return (
-        <TouchableOpacity 
-          style={styles.joinButton} 
-          onPress={handleJoin} 
+        <Button 
+          title={t('join_game')}
+          variant="urgent"
+          onPress={handleJoin}
           disabled={isJoining}
-          activeOpacity={0.8}
-        >
-          {isJoining ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.joinButtonText}>{t('join_game')}</Text>
-          )}
-        </TouchableOpacity>
+          loading={isJoining}
+          style={{ marginBottom: 10 }}
+        />
     );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.title}>{match?.title || t('untitled')}</Text>
         
         <View style={styles.infoRow}>
@@ -224,11 +214,11 @@ export default function MatchDetailsScreen({ route, navigation }) {
           activeOpacity={0.7}
         >
           <Text style={styles.label}>{t('participants_label')}</Text>
-          <Text style={[styles.value, { color: colors.primary, textDecorationLine: 'underline' }]}>
+          <Text style={[styles.value, { color: theme.colors.primary, textDecorationLine: 'underline' }]}>
             {participantsCount} / {match?.max_players || '?'}
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
       {match?.external_chat_link && isUserParticipant && (
         <TouchableOpacity 
@@ -241,14 +231,11 @@ export default function MatchDetailsScreen({ route, navigation }) {
       )}
 
       {(isUserParticipant || isOrganizer) && (
-        <TouchableOpacity 
-          style={styles.internalChatButton} 
+        <Button 
+          title={t('open_match_chat', 'Открыть чат матча')}
           onPress={() => navigation.navigate('MatchChat', { matchId: match.id, matchTitle: match.title || t(match.sport_type) })}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="forum" size={20} color="#FFF" style={{marginRight: 8}} />
-          <Text style={styles.internalChatButtonText}>{t('open_match_chat', 'Открыть чат матча')}</Text>
-        </TouchableOpacity>
+          style={{ backgroundColor: '#34C759', marginBottom: 10, borderWidth: 0 }}
+        />
       )}
 
       {match?.pitch_is_paid && (
@@ -301,7 +288,7 @@ export default function MatchDetailsScreen({ route, navigation }) {
                       {avatarUrl ? (
                         <Image source={{ uri: avatarUrl }} style={styles.participantAvatar} />
                       ) : (
-                        <MaterialIcons name="account-circle" size={40} color={colors.primary} style={styles.participantAvatarIcon} />
+                        <MaterialIcons name="account-circle" size={40} color={theme.colors.primary} style={styles.participantAvatarIcon} />
                       )}
                       <Text style={styles.participantName}>{item.username.replace(/_/g, ' ')}</Text>
                     </View>
@@ -314,12 +301,11 @@ export default function MatchDetailsScreen({ route, navigation }) {
               ListEmptyComponent={<Text style={styles.emptyText}>{t('no_participants_yet')}</Text>}
             />
 
-            <TouchableOpacity 
-              style={styles.closeModalButton}
+            <Button 
+              title={t('close_btn')}
               onPress={() => setParticipantsModalVisible(false)}
-            >
-              <Text style={styles.closeModalButtonText}>{t('close_btn')}</Text>
-            </TouchableOpacity>
+              style={{ marginTop: 16 }}
+            />
           </View>
         </View>
       </Modal>
@@ -330,24 +316,16 @@ export default function MatchDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     padding: 16,
     justifyContent: 'space-between',
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
+    ...theme.typography.headlineLarge,
+    color: theme.colors.text,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -356,67 +334,46 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
     paddingBottom: 8,
   },
   label: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    fontWeight: '500',
+    ...theme.typography.labelLarge,
+    color: theme.colors.textSecondary,
   },
   value: {
-    fontSize: 16,
-    color: colors.text,
+    ...theme.typography.bodyLarge,
+    color: theme.colors.text,
     fontWeight: '600',
   },
   descriptionContainer: {
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
     paddingBottom: 12,
   },
   descriptionLabel: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: 'bold',
+    ...theme.typography.labelLarge,
+    color: theme.colors.text,
     marginBottom: 6,
   },
   descriptionText: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
-  joinButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  joinButtonText: {
-    color: '#FFFFFF', // Can use colors.surface
-    fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+    ...theme.typography.bodyMedium,
+    color: theme.colors.textSecondary,
   },
   chatButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: theme.colors.primary,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: theme.radii.pill,
     alignItems: 'center',
     marginBottom: 10,
   },
   chatButtonText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: theme.colors.primary,
+    ...theme.typography.labelMedium,
+    textTransform: 'uppercase',
   },
   internalChatButton: {
     backgroundColor: '#34C759',
@@ -457,16 +414,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: theme.radii.xl,
+    borderTopRightRadius: theme.radii.xl,
     padding: 20,
     maxHeight: '80%',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
+    ...theme.typography.headlineMedium,
+    color: theme.colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -476,7 +432,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   participantInfoContainer: {
     flexDirection: 'row',
@@ -494,32 +450,30 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   participantName: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: '500',
+    ...theme.typography.bodyLarge,
+    color: theme.colors.text,
     flexShrink: 1,
   },
   participantSkillBadge: {
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: theme.radii.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
   },
   participantSkillText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '600',
+    ...theme.typography.labelSmall,
+    color: theme.colors.textSecondary,
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginTop: 20,
     marginBottom: 20,
   },
   closeModalButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',

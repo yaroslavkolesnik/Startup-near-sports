@@ -4,8 +4,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { SPORT_KEYS, getSportName } from '../config/sports';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 export default function RegisterScreen({ navigation }) {
   const { t } = useTranslation();
@@ -66,7 +68,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAvoidingView 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -88,38 +90,30 @@ export default function RegisterScreen({ navigation }) {
             {!avatarUri && <Text style={styles.avatarText}>{t('add_photo')}</Text>}
           </View>
 
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder={t('username_placeholder')}
-          placeholderTextColor={colors.textSecondary}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
         />
         
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder={t('email_placeholder')}
-          placeholderTextColor={colors.textSecondary}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
         />
 
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder={t('password_placeholder')}
-          placeholderTextColor={colors.textSecondary}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
         
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder={t('confirm_password_placeholder')}
-          placeholderTextColor={colors.textSecondary}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -170,18 +164,13 @@ export default function RegisterScreen({ navigation }) {
           </View>
         )}
 
-        <TouchableOpacity 
-          style={styles.button} 
+        <Button 
+          title={t('create_account_title')}
           onPress={handleRegister}
+          loading={isLoading}
           disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          {isLoading ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.buttonText}>{t('create_account_title')}</Text>
-          )}
-        </TouchableOpacity>
+          style={{ marginTop: 8 }}
+        />
 
         <TouchableOpacity 
           style={styles.linkContainer}
@@ -200,22 +189,21 @@ export default function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
   },
   formContainer: {
     paddingHorizontal: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.text,
+    ...theme.typography.headlineMedium,
+    color: theme.colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    ...theme.typography.bodyMedium,
+    color: theme.colors.textSecondary,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -238,55 +226,24 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  input: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 16,
-    fontSize: 16,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  buttonText: {
-    color: colors.surface,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+    ...theme.typography.labelMedium,
+    color: theme.colors.textSecondary,
   },
   linkContainer: {
     marginTop: 24,
     alignItems: 'center',
   },
   linkText: {
-    color: colors.textSecondary,
-    fontSize: 15,
+    color: theme.colors.textSecondary,
+    ...theme.typography.bodyMedium,
   },
   linkTextBold: {
-    color: colors.primary,
+    color: theme.colors.primary,
     fontWeight: 'bold',
   },
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
+    ...theme.typography.labelMedium,
+    color: theme.colors.text,
     marginBottom: 12,
     marginTop: 8,
   },
@@ -298,23 +255,23 @@ const styles = StyleSheet.create({
   sportBadge: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: theme.radii.pill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
     marginRight: 8,
     marginBottom: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
   },
   sportBadgeActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
   },
   sportBadgeText: {
-    color: colors.textSecondary,
-    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    ...theme.typography.labelSmall,
   },
   sportBadgeTextActive: {
-    color: colors.surface,
+    color: theme.colors.surface,
   },
   skillsContainer: {
     marginBottom: 24,
@@ -323,9 +280,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   skillSportName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
+    ...theme.typography.labelMedium,
+    color: theme.colors.text,
     marginBottom: 8,
   },
   levelButtons: {
@@ -336,22 +292,21 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.md,
     alignItems: 'center',
     marginHorizontal: 4,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
   },
   levelBadgeSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
   },
   levelText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    ...theme.typography.labelSmall,
   },
   levelTextSelected: {
-    color: colors.surface,
+    color: theme.colors.surface,
   },
 });

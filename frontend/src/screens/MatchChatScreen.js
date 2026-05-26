@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { AuthContext } from '../context/AuthContext';
 import { getMatchMessages, sendMatchMessage } from '../api/matches';
 
@@ -70,7 +70,7 @@ export default function MatchChatScreen({ route, navigation }) {
                         {item.sender_avatar ? (
                             <Image source={{ uri: getAvatarUrl(item.sender_avatar) }} style={styles.avatar} />
                         ) : (
-                            <MaterialIcons name="account-circle" size={32} color={colors.primary} />
+                            <MaterialIcons name="account-circle" size={32} color={theme.colors.primary} />
                         )}
                     </View>
                 )}
@@ -93,7 +93,7 @@ export default function MatchChatScreen({ route, navigation }) {
     if (loading) {
         return (
             <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
     }
@@ -118,7 +118,7 @@ export default function MatchChatScreen({ route, navigation }) {
                 <TextInput
                     style={styles.input}
                     placeholder={t('send_msg_placeholder', 'Введите сообщение...')}
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor={theme.colors.textSecondary}
                     value={inputText}
                     onChangeText={setInputText}
                     multiline
@@ -142,13 +142,13 @@ export default function MatchChatScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: theme.colors.background,
     },
     loaderContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.background,
+        backgroundColor: theme.colors.background,
     },
     listContent: {
         padding: 16,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
     otherMessageBubble: {
-        backgroundColor: colors.surface,
+        backgroundColor: theme.colors.surface,
         borderBottomLeftRadius: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -191,12 +191,12 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     myMessageBubble: {
-        backgroundColor: colors.primary,
+        backgroundColor: theme.colors.primary,
         borderBottomRightRadius: 4,
     },
     senderName: {
         fontWeight: 'bold',
-        color: colors.primary,
+        color: theme.colors.primary,
         marginBottom: 4,
         fontSize: 13,
     },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     otherMessageText: {
-        color: colors.text,
+        color: theme.colors.text,
     },
     myMessageText: {
         color: '#FFF',
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     otherTimeText: {
-        color: colors.textSecondary,
+        color: theme.colors.textSecondary,
     },
     myTimeText: {
         color: 'rgba(255, 255, 255, 0.7)',
@@ -228,25 +228,25 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         padding: 12,
-        backgroundColor: colors.surface,
+        backgroundColor: theme.colors.surface,
         borderTopWidth: 1,
-        borderTopColor: colors.border,
+        borderTopColor: theme.colors.border,
         alignItems: 'flex-end',
     },
     input: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: theme.colors.background,
         borderRadius: 20,
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 12,
         fontSize: 15,
-        color: colors.text,
+        color: theme.colors.text,
         maxHeight: 100,
         minHeight: 40,
     },
     sendButton: {
-        backgroundColor: colors.primary,
+        backgroundColor: theme.colors.primary,
         width: 44,
         height: 44,
         borderRadius: 22,
@@ -256,6 +256,6 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     sendButtonDisabled: {
-        backgroundColor: colors.textSecondary,
+        backgroundColor: theme.colors.textSecondary,
     },
 });

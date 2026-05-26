@@ -3,14 +3,15 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import ImageView from "react-native-image-viewing";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { getMatches } from '../api/matches';
 import { deletePitch } from '../api/pitches';
 import { AuthContext } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getSportName } from '../config/sports';
-import CountdownTimer from '../components/CountdownTimer';
-import WeatherBadge from '../components/WeatherBadge';
+import MatchCard from '../components/MatchCard';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 export default function PitchDetailsScreen({ route, navigation }) {
   const { t } = useTranslation();
@@ -92,7 +93,7 @@ export default function PitchDetailsScreen({ route, navigation }) {
     setIsGalleryVisible(true);
   };
 
-  const cardWidth = Dimensions.get('window').width - 40;
+  const cardWidth = Dimensions.get('window').width - 72;
 
   useEffect(() => {
     fetchMatches();
@@ -167,73 +168,13 @@ export default function PitchDetailsScreen({ route, navigation }) {
   };
 
   const renderMatch = ({ item }) => {
-    const participantsCount = item.participants?.length || 0;
-    const timeFormatted = item.start_time 
-      ? new Date(item.start_time).toLocaleString('ru-RU', { 
-          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
-        })
-      : t('time_not_specified');
-
-    const now = new Date();
-    const startTime = item.start_time ? new Date(item.start_time) : null;
-    const duration = item.duration_minutes || 90;
-    
-    let isPlayingNow = false;
-    let useCountdown = false;
-    let isStartingSoonStatic = false;
-    
-    if (startTime) {
-      const endTime = new Date(startTime.getTime() + duration * 60000);
-      isPlayingNow = now >= startTime && now <= endTime;
-      
-      if (!isPlayingNow && startTime > now) {
-        const timeDiffMs = startTime.getTime() - now.getTime();
-        if (timeDiffMs <= 60 * 60 * 1000) {
-          useCountdown = true;
-        } else if (timeDiffMs <= 2 * 60 * 60 * 1000) {
-          isStartingSoonStatic = true;
-        }
-      }
-    }
-
     return (
-      <TouchableOpacity 
-        style={styles.matchCard}
-        activeOpacity={0.7}
+      <MatchCard 
+        match={item}
         onPress={() => navigation.navigate('MatchDetails', { match: item })}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.matchTitle}>{item.title || t(item.sport_type)}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {pitch?.latitude && pitch?.longitude && (
-              <WeatherBadge 
-                latitude={pitch.latitude} 
-                longitude={pitch.longitude} 
-                startTime={item.start_time} 
-              />
-            )}
-            <TouchableOpacity onPress={() => handleShareMatch(item)} style={styles.shareButton}>
-              <Ionicons name="share-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-        {useCountdown ? (
-          <CountdownTimer targetTime={item.start_time} />
-        ) : isPlayingNow ? (
-          <View style={styles.playingNowBadge}>
-            <Text style={styles.playingNowText}>{t('playing_now')}</Text>
-          </View>
-        ) : isStartingSoonStatic ? (
-          <View style={styles.startingSoonBadge}>
-            <Text style={styles.startingSoonText}>{t('starting_soon')}</Text>
-          </View>
-        ) : (
-          <Text style={styles.matchTime}>{timeFormatted}</Text>
-        )}
-        <Text style={styles.matchParticipants}>
-          {t('participants_count')}: {participantsCount} / {item.max_players || '?'}
-        </Text>
-      </TouchableOpacity>
+        onShare={handleShareMatch}
+        pitchLocation={{ latitude: pitch?.latitude, longitude: pitch?.longitude }}
+      />
     );
   };
 
@@ -285,33 +226,30 @@ export default function PitchDetailsScreen({ route, navigation }) {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity 
-          style={styles.createButton}
+        <Button 
+          title={t('create_game_here')}
           onPress={() => navigation.navigate('CreateMatch', { 
             pitchId: pitch?.id || pitch,
             pitchSportType: pitch?.sport_type
           })}
-        >
-          <Text style={styles.createButtonText}>{t('create_game_here')}</Text>
-        </TouchableOpacity>
+          style={{ marginTop: 16 }}
+        />
 
         {user?.id === (pitch?.created_by?.id || pitch?.created_by) && (
           <View style={styles.authorActions}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1 }]}
+            <Button 
+              title={t('edit')}
+              variant="secondary"
               onPress={() => navigation.navigate('EditPitch', { pitch })}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.actionButtonText, { color: colors.primary }]}>{t('edit')}</Text>
-            </TouchableOpacity>
+              style={{ flex: 1, marginRight: 8 }}
+            />
             
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: '#FF3B30' }]}
+            <Button 
+              title={t('delete')}
+              variant="primary"
               onPress={handleDeletePitch}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.actionButtonText}>{t('delete')}</Text>
-            </TouchableOpacity>
+              style={{ flex: 1, backgroundColor: '#FF3B30' }}
+            />
           </View>
         )}
       </View>
@@ -412,7 +350,7 @@ export default function PitchDetailsScreen({ route, navigation }) {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
           ) : (
             <Text style={styles.emptyText}>{t('no_games_desc')}</Text>
           )
@@ -440,13 +378,13 @@ export default function PitchDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
   headerCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -456,7 +394,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+    color: theme.colors.text,
     marginBottom: 8,
   },
   pitchImage: {
@@ -471,24 +409,24 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     marginBottom: 16,
-    backgroundColor: colors.border,
+    backgroundColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderText: {
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     fontSize: 16,
     fontWeight: '600',
   },
   sportType: {
     fontSize: 16,
-    color: colors.primary,
+    color: theme.colors.primary,
     fontWeight: '600',
     marginBottom: 4,
   },
   address: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
   },
   creatorName: {
     fontSize: 14,
@@ -497,7 +435,7 @@ const styles = StyleSheet.create({
   },
   matchParticipants: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
   },
   playingNowBadge: {
     backgroundColor: '#FF3B30',
@@ -528,7 +466,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
+    color: theme.colors.text,
     marginTop: 20,
     marginBottom: 12,
     paddingHorizontal: 16,
@@ -537,23 +475,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: theme.colors.border,
   },
   descriptionLabel: {
     fontSize: 16,
-    color: colors.text,
+    color: theme.colors.text,
     fontWeight: 'bold',
     marginBottom: 6,
   },
   descriptionText: {
     fontSize: 15,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     lineHeight: 22,
   },
   directionsButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: theme.colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -562,14 +500,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   directionsButtonText: {
-    color: colors.primary,
+    color: theme.colors.primary,
     fontSize: 14,
     fontWeight: 'bold',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
+    color: theme.colors.text,
     marginHorizontal: 16,
     marginTop: 20,
     marginBottom: 10,
@@ -579,7 +517,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   matchCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -600,29 +538,29 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   matchTitle: {
-    color: colors.text,
+    color: theme.colors.text,
     fontSize: 18,
     fontWeight: 'bold',
     flex: 1,
   },
   matchTime: {
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     fontSize: 14,
     marginBottom: 4,
   },
   matchParticipants: {
-    color: colors.primary,
+    color: theme.colors.primary,
     fontSize: 14,
     fontWeight: '500',
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginTop: 30,
-    fontSize: 16,
+    ...theme.typography.bodyMedium,
   },
   createButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -656,9 +594,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
     paddingVertical: 8,
     marginBottom: 10,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   filtersContent: {
     paddingHorizontal: 16,
@@ -669,15 +607,15 @@ const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   filterChipText: {
     fontSize: 14,

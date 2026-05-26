@@ -1,8 +1,21 @@
 export const colors = {
-  primary: '#007AFF', // Active color
-  background: '#F2F2F7', // Light app background
-  surface: '#FFFFFF', // Background for cards and bottom bar
-  text: '#1C1C1E', // Primary text
-  textSecondary: '#8E8E93', // Secondary text (inactive tabs)
-  border: '#C6C6C8', // Border color
+  // Brand Colors
+  primary: '#0058bc', // Electric Blue
+  secondary: '#39ff14', // Neon Green (Active/Open/Success)
+  tertiary: '#ff5f00', // Energetic Orange (Urgent)
+  
+  // Neutral & Surface
+  background: '#fcf9f8', // Stadium White
+  surface: '#ffffff', // Clean white for cards
+  surfaceContainer: '#f0edec', // Slightly off-white for backgrounds
+  inputBg: '#F1F3F5', // Soft grey for inputs
+  
+  // Text
+  text: '#1c1b1b', // Carbon black
+  textSecondary: '#414755',
+  textInverse: '#ffffff', // White text on dark buttons
+  
+  // State
+  error: '#ba1a1a',
+  outline: '#717786',
 };

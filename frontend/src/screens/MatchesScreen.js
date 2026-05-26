@@ -4,11 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { getMatches, getMyMatches } from '../api/matches';
 import { getSportName } from '../config/sports';
-import CountdownTimer from '../components/CountdownTimer';
-import WeatherBadge from '../components/WeatherBadge';
+import MatchCard from '../components/MatchCard';
 import SportFilter from '../components/SportFilter';
 
 export default function MatchesScreen({ navigation }) {
@@ -154,102 +153,13 @@ export default function MatchesScreen({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    // If the API serializes participants as an array, we get the length. 
-    // Fallback to 0 if it's undefined to be safe.
-    const participantsCount = item.participants?.length || 0;
-    
-    // Formatting start_time nicely if it exists
-    const timeFormatted = item.start_time 
-      ? new Date(item.start_time).toLocaleString('ru-RU', { 
-          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
-        })
-      : t('time_not_specified');
-
-    const surfaceMap = {
-      'NATURAL_GRASS': t('surface_natural'),
-      'SYNTHETIC_GRASS': t('surface_synthetic'),
-      'PARQUET': t('surface_parquet'),
-      'ASPHALT': t('surface_asphalt'),
-      'RUBBER': t('surface_rubber'),
-      'SAND': t('surface_sand')
-    };
-    const surfaceDisplay = item.pitch_surface ? surfaceMap[item.pitch_surface] || item.pitch_surface : t('surface_not_specified');
-
-    const now = new Date();
-    const startTime = item.start_time ? new Date(item.start_time) : null;
-    const duration = item.duration_minutes || 90;
-    
-    let isPlayingNow = false;
-    let useCountdown = false;
-    let isStartingSoonStatic = false;
-    
-    if (startTime) {
-      const endTime = new Date(startTime.getTime() + duration * 60000);
-      isPlayingNow = now >= startTime && now <= endTime;
-      
-      if (!isPlayingNow && startTime > now) {
-        const timeDiffMs = startTime.getTime() - now.getTime();
-        if (timeDiffMs <= 60 * 60 * 1000) {
-          useCountdown = true;
-        } else if (timeDiffMs <= 2 * 60 * 60 * 1000) {
-          isStartingSoonStatic = true;
-        }
-      }
-    }
-
     return (
-      <TouchableOpacity 
-        style={styles.card}
-        activeOpacity={0.7}
+      <MatchCard 
+        match={item}
         onPress={() => navigation.navigate('MatchDetails', { match: item })}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.title}>{item.title || t(item.sport_type)}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {item.pitch_latitude && item.pitch_longitude && (
-              <WeatherBadge 
-                latitude={item.pitch_latitude} 
-                longitude={item.pitch_longitude} 
-                startTime={item.start_time} 
-              />
-            )}
-            <TouchableOpacity onPress={() => handleShareMatch(item)} style={styles.shareButton}>
-              <Ionicons name="share-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {item.pitch_address && (
-          <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={14} color="#666" style={styles.addressIcon} />
-            <Text style={styles.addressText} numberOfLines={1}>{item.pitch_address}</Text>
-          </View>
-        )}
-        
-        {useCountdown ? (
-          <CountdownTimer targetTime={item.start_time} />
-        ) : isPlayingNow ? (
-          <View style={styles.playingNowBadge}>
-            <Text style={styles.playingNowText}>{t('playing_now')}</Text>
-          </View>
-        ) : isStartingSoonStatic ? (
-          <View style={styles.startingSoonBadge}>
-            <Text style={styles.startingSoonText}>{t('starting_soon')}</Text>
-          </View>
-        ) : (
-          <Text style={styles.time}>{timeFormatted} • {surfaceDisplay}</Text>
-        )}
-        
-        {item.pitch_is_paid && (
-          <View style={styles.paidBadge}>
-            <Text style={styles.paidBadgeText}>💰 {item.pitch_price_per_hour} ₴/ч</Text>
-          </View>
-        )}
-        
-        <Text style={styles.participants}>
-          {t('participants_count')}: {participantsCount} / {item.max_players || '?'}
-        </Text>
-      </TouchableOpacity>
+        onShare={handleShareMatch}
+        pitchLocation={{ latitude: item.pitch_latitude, longitude: item.pitch_longitude }}
+      />
     );
   };
 
@@ -380,7 +290,7 @@ export default function MatchesScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -393,8 +303,8 @@ export default function MatchesScreen({ navigation }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
             />
           }
         />
@@ -406,7 +316,7 @@ export default function MatchesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
   loaderContainer: {
     flex: 1,
@@ -416,23 +326,23 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
   },
   searchInput: {
     height: 40,
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
     paddingHorizontal: 12,
-    color: '#333',
+    color: theme.colors.text,
   },
   tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.surfaceContainer,
   },
   tab: {
     flex: 1,
@@ -442,22 +352,22 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: colors.primary,
+    borderBottomColor: theme.colors.primary,
   },
   tabText: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   activeTabText: {
-    color: colors.primary,
+    color: theme.colors.primary,
   },
   listContent: {
     padding: 16,
     flexGrow: 1,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -481,7 +391,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   title: {
-    color: colors.text,
+    color: theme.colors.text,
     fontSize: 18,
     fontWeight: 'bold',
     flex: 1,
@@ -500,12 +410,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     fontSize: 14,
     marginBottom: 4,
   },
   participants: {
-    color: colors.primary,
+    color: theme.colors.primary,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -557,21 +467,21 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
   },
   filtersContainer: {
     flexGrow: 0,
     minHeight: 50,
     paddingVertical: 8,
     marginBottom: 10,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   filtersContent: {
     paddingHorizontal: 16,
@@ -582,15 +492,15 @@ const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   filterChipText: {
     fontSize: 14,

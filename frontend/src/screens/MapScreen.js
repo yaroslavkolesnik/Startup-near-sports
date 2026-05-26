@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getPitches, getMyPitches } from '../api/pitches';
 import SportFilter from '../components/SportFilter';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 
 export default function MapScreen({ navigation }) {
   const { t } = useTranslation();
@@ -138,7 +138,7 @@ export default function MapScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary || '#007AFF'} />
+        <ActivityIndicator size="large" color={theme.colors.primary || '#007AFF'} />
       </View>
     );
   }
@@ -232,7 +232,7 @@ export default function MapScreen({ navigation }) {
         initialRegion={region}
         showsUserLocation={true}
         mapPadding={{ top: 110, right: 0, bottom: 0, left: 0 }}
-        clusterColor={colors.primary}
+        clusterColor={theme.colors.primary}
       >
         {pitches.map((pitch) => {
           // Protection against bad data
@@ -270,7 +270,7 @@ export default function MapScreen({ navigation }) {
         activeOpacity={0.8}
         onPress={handleCenterUserLocation}
       >
-        <MaterialCommunityIcons name="crosshairs-gps" size={28} color={colors.primary} />
+        <MaterialCommunityIcons name="crosshairs-gps" size={28} color={theme.colors.primary} />
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -287,7 +287,7 @@ export default function MapScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background || '#ffffff',
+    backgroundColor: theme.colors.background || '#ffffff',
   },
   filterOverlay: {
     position: 'absolute',
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   surfaceChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   surfaceChipText: {
     fontSize: 12,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   toggleButtonActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: theme.colors.primary,
   },
   toggleButtonText: {
     color: '#666',
@@ -393,18 +393,18 @@ const styles = StyleSheet.create({
   dropdownItemTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: colors.text,
+    color: theme.colors.text,
   },
   dropdownItemAddress: {
     fontSize: 12,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background || '#ffffff',
+    backgroundColor: theme.colors.background || '#ffffff',
   },
   calloutContainer: {
     padding: 10,
@@ -414,19 +414,19 @@ const styles = StyleSheet.create({
   calloutTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
+    color: theme.colors.text,
     marginBottom: 4,
     textAlign: 'center',
   },
   calloutDescription: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: theme.colors.textSecondary,
     marginBottom: 8,
     textAlign: 'center',
   },
   calloutClickable: {
     fontSize: 12,
-    color: colors.primary,
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   fab: {
@@ -436,14 +436,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.primary,
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    ...theme.shadows.level2,
   },
   locationFab: {
     position: 'absolute',
@@ -452,13 +448,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    ...theme.shadows.level1,
   },
 });
