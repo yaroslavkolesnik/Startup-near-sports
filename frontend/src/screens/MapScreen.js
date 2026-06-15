@@ -100,11 +100,12 @@ export default function MapScreen({ navigation }) {
         try {
           let data;
           if (viewMode === 'my') {
-            data = await getMyPitches(selectedSport, searchQuery, selectedSurface, paymentFilter);
+            data = await getMyPitches(selectedSport, searchQuery, selectedSurface, paymentFilter, 1, true);
           } else {
-            data = await getPitches(selectedSport, searchQuery, selectedSurface, paymentFilter);
+            data = await getPitches(selectedSport, searchQuery, selectedSurface, paymentFilter, 1, true);
           }
-          setPitches(data || []);
+          const newItems = data?.results || data;
+          setPitches(Array.isArray(newItems) ? newItems : []);
         } catch (error) {
           console.error('Failed to load pitches for map on focus:', error);
         }
@@ -120,11 +121,12 @@ export default function MapScreen({ navigation }) {
       try {
         let data;
         if (viewMode === 'my') {
-          data = await getMyPitches(selectedSport, searchQuery, selectedSurface, paymentFilter);
+          data = await getMyPitches(selectedSport, searchQuery, selectedSurface, paymentFilter, 1, true);
         } else {
-          data = await getPitches(selectedSport, searchQuery, selectedSurface, paymentFilter);
+          data = await getPitches(selectedSport, searchQuery, selectedSurface, paymentFilter, 1, true);
         }
-        setPitches(data || []);
+        const newItems = data?.results || data;
+        setPitches(Array.isArray(newItems) ? newItems : []);
       } catch (error) {
         console.error('Failed to load pitches for map:', error);
       } finally {
@@ -247,6 +249,8 @@ export default function MapScreen({ navigation }) {
               }}
               title={pitch.title}
               description={t(pitch.sport_type)}
+              pinColor={pitch.is_active === false ? '#A0A0A0' : theme.colors.primary}
+              opacity={pitch.is_active === false ? 0.6 : 1}
             >
               <Callout
                 tooltip={false}

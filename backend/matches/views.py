@@ -25,7 +25,12 @@ class MatchViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'pitch__address', 'description']
 
     def get_queryset(self):
-        queryset = Match.objects.all()
+        queryset = Match.objects.all().order_by('-created_at')
+        
+        pitch_id = self.request.query_params.get('pitch_id')
+        if pitch_id:
+            queryset = queryset.filter(pitch_id=pitch_id)
+            
         sport_type = self.request.query_params.get('sport_type')
         if sport_type:
             queryset = queryset.filter(sport_type=sport_type)
@@ -36,6 +41,11 @@ class MatchViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(pitch__is_paid=is_paid_bool)
             
         return queryset
+
+    def paginate_queryset(self, queryset):
+        if self.request.query_params.get('no_page') == 'true':
+            return None
+        return super().paginate_queryset(queryset)
 
     def get_permissions(self):
         if self.action in ['join', 'leave', 'my_matches']:
@@ -135,6 +145,7 @@ class MatchViewSet(viewsets.ModelViewSet):
 class MatchMessageListCreateView(generics.ListCreateAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         match_id = self.kwargs['match_id']

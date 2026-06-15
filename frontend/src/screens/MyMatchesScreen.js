@@ -21,34 +21,56 @@ export default function MyMatchesScreen({ navigation }) {
   const [selectedSport, setSelectedSport] = useState('ALL');
   const [paymentFilter, setPaymentFilter] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
-      fetchData();
+      fetchData(1);
     }, [activeTab, selectedSport, paymentFilter])
   );
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (pageNum = 1) => {
+    if (pageNum === 1) setLoading(true);
+    else setIsLoadingMore(true);
+
     try {
+      let data;
       if (activeTab === 'matches') {
-        const data = await getMyMatches(selectedSport, '', paymentFilter);
-        setMatches(Array.isArray(data) ? data : []);
+        data = await getMyMatches(selectedSport, '', paymentFilter, pageNum);
+        const newItems = data?.results || data;
+        const isArray = Array.isArray(newItems);
+        if (pageNum === 1) setMatches(isArray ? newItems : []);
+        else setMatches(prev => [...prev, ...(isArray ? newItems : [])]);
       } else {
-        const data = await getMyPitches(selectedSport, '', null, paymentFilter);
-        setMyPitches(Array.isArray(data) ? data : []);
+        data = await getMyPitches(selectedSport, '', null, paymentFilter, pageNum);
+        const newItems = data?.results || data;
+        const isArray = Array.isArray(newItems);
+        if (pageNum === 1) setMyPitches(isArray ? newItems : []);
+        else setMyPitches(prev => [...prev, ...(isArray ? newItems : [])]);
       }
+      setHasMore(!!data?.next);
+      setPage(pageNum);
     } catch (error) {
       console.error(`Error fetching my ${activeTab}:`, error);
     } finally {
-      setLoading(false);
+      if (pageNum === 1) setLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(1);
     setRefreshing(false);
   }, [activeTab, selectedSport, paymentFilter]);
+
+  const handleLoadMore = () => {
+    if (hasMore && !isLoadingMore && !loading) {
+      fetchData(page + 1);
+    }
+  };
 
   const handleDeletePitch = (id) => {
     Alert.alert(
@@ -62,7 +84,7 @@ export default function MyMatchesScreen({ navigation }) {
           onPress: async () => {
             try {
               await deletePitch(id);
-              fetchData();
+              fetchData(1);
             } catch (error) {
               Alert.alert(t('error'), t('error_delete_pitch'));
             }
@@ -195,6 +217,9 @@ export default function MyMatchesScreen({ navigation }) {
         renderItem={activeTab === 'matches' ? renderItem : renderPitchItem}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={activeTab === 'matches' ? renderEmptyComponent : renderEmptyPitches}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={isLoadingMore ? <ActivityIndicator size="small" color={theme.colors.primary} style={{ margin: 16 }} /> : null}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

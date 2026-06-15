@@ -20,6 +20,10 @@ export default function MatchesScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [paymentFilter, setPaymentFilter] = useState(null);
   
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
   // Advanced filters states
   const [dateFilter, setDateFilter] = useState(null); // 'TODAY', 'WEEKEND', Date, null
   const [hasSpotsFilter, setHasSpotsFilter] = useState(false);
@@ -43,18 +47,37 @@ export default function MatchesScreen({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const data = selectedTab === 'all' 
-          ? await getMatches(selectedSport, searchQuery, paymentFilter) 
-          : await getMyMatches(selectedSport, searchQuery, paymentFilter);
-        setMatches(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
-      } finally {
-        setLoading(false);
+  const fetchMatchesData = async (pageNum = 1) => {
+    if (pageNum === 1) setLoading(true);
+    else setIsLoadingMore(true);
+
+    try {
+      const data = selectedTab === 'all' 
+        ? await getMatches(selectedSport, searchQuery, paymentFilter, pageNum) 
+        : await getMyMatches(selectedSport, searchQuery, paymentFilter, pageNum);
+        
+      const newItems = data?.results || data;
+      const isArray = Array.isArray(newItems);
+      
+      if (pageNum === 1) {
+        setMatches(isArray ? newItems : []);
+      } else {
+        setMatches(prev => [...prev, ...(isArray ? newItems : [])]);
       }
+      
+      setHasMore(!!data?.next);
+      setPage(pageNum);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+    } finally {
+      if (pageNum === 1) setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchMatchesData(1);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
@@ -62,33 +85,21 @@ export default function MatchesScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchMatchesFocus = async () => {
-        try {
-          const data = selectedTab === 'all' 
-            ? await getMatches(selectedSport, searchQuery, paymentFilter) 
-            : await getMyMatches(selectedSport, searchQuery, paymentFilter);
-          setMatches(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error("Error fetching matches on focus:", error);
-        }
-      };
-      fetchMatchesFocus();
+      fetchMatchesData(1);
     }, [selectedTab, selectedSport, searchQuery, paymentFilter])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    try {
-      const data = selectedTab === 'all' 
-        ? await getMatches(selectedSport, searchQuery, paymentFilter) 
-        : await getMyMatches(selectedSport, searchQuery, paymentFilter);
-      setMatches(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error refreshing matches:", error);
-    } finally {
-      setRefreshing(false);
-    }
+    await fetchMatchesData(1);
+    setRefreshing(false);
   }, [selectedTab, selectedSport, searchQuery, paymentFilter]);
+
+  const handleLoadMore = () => {
+    if (hasMore && !isLoadingMore && !loading) {
+      fetchMatchesData(page + 1);
+    }
+  };
 
   const filteredMatches = matches.filter(match => {
     // 0. Hide old games
@@ -299,6 +310,9 @@ export default function MatchesScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={renderEmptyComponent}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={isLoadingMore ? <ActivityIndicator size="small" color={theme.colors.primary} style={{ margin: 16 }} /> : null}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

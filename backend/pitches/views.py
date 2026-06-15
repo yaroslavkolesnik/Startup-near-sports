@@ -65,9 +65,20 @@ class PitchViewSet(viewsets.ModelViewSet):
             pitch.photos = photos_list[-5:]
             pitch.save(update_fields=['photos'])
 
+    def paginate_queryset(self, queryset):
+        if self.request.query_params.get('no_page') == 'true':
+            return None
+        return super().paginate_queryset(queryset)
+
     @action(detail=False, methods=['get'])
     def my(self, request):
         pitches = self.filter_queryset(self.get_queryset().filter(created_by=request.user))
+        page = self.paginate_queryset(pitches)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            return Response({"data": response.data})
+
         serializer = self.get_serializer(pitches, many=True)
         return Response({"data": serializer.data})
 

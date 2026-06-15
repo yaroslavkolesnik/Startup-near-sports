@@ -2,7 +2,7 @@ import { getToken, fetchWithAuth } from './auth';
 
 const API_BASE_URL = 'http://192.168.0.67:8000/api';
 
-export const getPitches = async (sportType, searchQuery = '', surfaceType = null, isPaid = null) => {
+export const getPitches = async (sportType, searchQuery = '', surfaceType = null, isPaid = null, page = 1, noPage = false) => {
     try {
         let url = `${API_BASE_URL}/pitches/`;
         let queryParams = [];
@@ -10,6 +10,11 @@ export const getPitches = async (sportType, searchQuery = '', surfaceType = null
         if (searchQuery) queryParams.push(`search=${encodeURIComponent(searchQuery)}`);
         if (surfaceType) queryParams.push(`surface_type=${encodeURIComponent(surfaceType)}`);
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
+        if (noPage) {
+            queryParams.push('no_page=true');
+        } else if (page > 1) {
+            queryParams.push(`page=${page}`);
+        }
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
         
         const response = await fetchWithAuth(url);
@@ -17,7 +22,7 @@ export const getPitches = async (sportType, searchQuery = '', surfaceType = null
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const json = await response.json();
-        return json.data;
+        return json.data || json;
     } catch (error) {
         console.error("Error fetching pitches:", error);
         throw error;
@@ -91,7 +96,7 @@ export const createPitch = async (pitchData, photos) => {
     }
 };
 
-export const getMyPitches = async (sportType, searchQuery = '', surfaceType = null, isPaid = null) => {
+export const getMyPitches = async (sportType, searchQuery = '', surfaceType = null, isPaid = null, page = 1, noPage = false) => {
     try {
         const token = await getToken();
         if (!token) throw new Error("No auth token");
@@ -102,6 +107,11 @@ export const getMyPitches = async (sportType, searchQuery = '', surfaceType = nu
         if (searchQuery) queryParams.push(`search=${encodeURIComponent(searchQuery)}`);
         if (surfaceType) queryParams.push(`surface_type=${encodeURIComponent(surfaceType)}`);
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
+        if (noPage) {
+            queryParams.push('no_page=true');
+        } else if (page > 1) {
+            queryParams.push(`page=${page}`);
+        }
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
 
         const response = await fetchWithAuth(url, {
@@ -113,7 +123,7 @@ export const getMyPitches = async (sportType, searchQuery = '', surfaceType = nu
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const json = await response.json();
-        return json.data;
+        return json.data || json;
     } catch (error) {
         console.error("Error fetching my pitches:", error);
         throw error;

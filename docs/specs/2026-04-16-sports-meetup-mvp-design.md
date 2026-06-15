@@ -31,6 +31,8 @@ Handles the map locations. Powered by UGC (User Generated Content) for fast orga
 * `fields_count` (`PositiveIntegerField`, `default=1`) - Number of independent fields at the location. Used to allow simultaneous matches without overlap.
 * `created_by` (`ForeignKey` -> `User`, `on_delete=models.SET_NULL`) - Original author of the location.
 * `is_verified` (`BooleanField`, `default=False`) - Admin moderation flag.
+* `is_active` (`BooleanField`, `default=True`) - Flag indicating if the pitch is open for games. If false, it acts as a "closed" status (e.g., under maintenance).
+* `status_message` (`CharField`, `max_length=255`, `blank=True`, `null=True`) - Optional text explaining why the pitch is closed (e.g., "Under construction until September").
 * `created_at` (`DateTimeField`, `auto_now_add=True`)
 * `updated_at` (`DateTimeField`, `auto_now=True`)
 

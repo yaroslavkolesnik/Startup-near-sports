@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert, Switch } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import MapView from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,6 +26,8 @@ export default function EditPitchScreen({ route, navigation }) {
   const [photosUpdated, setPhotosUpdated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldsCount, setFieldsCount] = useState(pitch.fields_count ? String(pitch.fields_count) : '1');
+  const [isActive, setIsActive] = useState(pitch.is_active !== false); // Default to true if undefined
+  const [statusMessage, setStatusMessage] = useState(pitch.status_message || '');
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -66,6 +68,8 @@ export default function EditPitchScreen({ route, navigation }) {
         surface_type: surfaceType,
         description,
         fields_count: parsedFieldsCount,
+        is_active: isActive,
+        status_message: !isActive ? statusMessage : null, // Only send message if closed
       };
 
       await updatePitch(pitch.id, pitchData, photosUpdated ? photos : null);
@@ -162,6 +166,25 @@ export default function EditPitchScreen({ route, navigation }) {
           keyboardType="numeric" 
         />
 
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchLabel}>{t('pitch_is_active_label', 'Площадка открыта для игр')}</Text>
+          <Switch
+            trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+            thumbColor={'#fff'}
+            onValueChange={setIsActive}
+            value={isActive}
+          />
+        </View>
+
+        {!isActive && (
+          <Input 
+            label={t('pitch_status_message_label', 'Причина закрытия')}
+            value={statusMessage} 
+            onChangeText={setStatusMessage} 
+            placeholder={t('pitch_status_message_placeholder', 'Например: На ремонте, зима...')} 
+          />
+        )}
+
         <Input 
           label={t('description_optional_label')}
           style={styles.textArea} 
@@ -217,4 +240,6 @@ const styles = StyleSheet.create({
   thumbnailImage: { width: 100, height: 100, borderRadius: 8, marginRight: 10 },
   pickerContainer: { backgroundColor: theme.colors.surface, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.border, marginBottom: 16, overflow: 'hidden', height: 50, justifyContent: 'center', paddingHorizontal: 10 },
   picker: { width: '100%', color: theme.colors.text },
+  switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, marginTop: 8 },
+  switchLabel: { ...theme.typography.labelMedium, color: theme.colors.text, fontSize: 16 },
 });

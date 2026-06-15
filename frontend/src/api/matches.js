@@ -3,13 +3,19 @@ import { getToken, fetchWithAuth } from './auth';
 
 const API_BASE_URL = 'http://192.168.0.67:8000/api';
 
-export const getMatches = async (sportType, searchQuery = '', isPaid = null) => {
+export const getMatches = async (sportType, searchQuery = '', isPaid = null, page = 1, pitchId = null, noPage = false) => {
     try {
         let url = `${API_BASE_URL}/matches/`;
         let queryParams = [];
         if (sportType && sportType !== 'ALL') queryParams.push(`sport_type=${sportType}`);
         if (searchQuery) queryParams.push(`search=${encodeURIComponent(searchQuery)}`);
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
+        if (pitchId) queryParams.push(`pitch_id=${pitchId}`);
+        if (noPage) {
+            queryParams.push(`no_page=true`);
+        } else if (page > 1) {
+            queryParams.push(`page=${page}`);
+        }
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
         
         const response = await fetchWithAuth(url);
@@ -17,7 +23,7 @@ export const getMatches = async (sportType, searchQuery = '', isPaid = null) => 
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const json = await response.json();
-        return json.data;
+        return json.data || json;
     } catch (error) {
         console.log("Error fetching matches:", error);
         throw error;
@@ -165,7 +171,7 @@ export const updateMatch = async (matchId, matchData) => {
     }
 };
 
-export const getMyMatches = async (sportType, searchQuery = '', isPaid = null) => {
+export const getMyMatches = async (sportType, searchQuery = '', isPaid = null, page = 1) => {
     try {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
@@ -175,6 +181,7 @@ export const getMyMatches = async (sportType, searchQuery = '', isPaid = null) =
         if (sportType && sportType !== 'ALL') queryParams.push(`sport_type=${sportType}`);
         if (searchQuery) queryParams.push(`search=${encodeURIComponent(searchQuery)}`);
         if (isPaid !== null && isPaid !== undefined) queryParams.push(`is_paid=${isPaid}`);
+        if (page > 1) queryParams.push(`page=${page}`);
         if (queryParams.length > 0) url += `?${queryParams.join('&')}`;
 
         const response = await fetchWithAuth(url, {

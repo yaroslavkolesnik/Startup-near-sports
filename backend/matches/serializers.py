@@ -45,6 +45,11 @@ class MatchSerializer(serializers.ModelSerializer):
         if not pitch and self.instance:
             pitch = self.instance.pitch
             
+        if pitch and not pitch.is_active:
+            raise serializers.ValidationError({
+                "non_field_errors": "Cannot create a match on a closed pitch."
+            })
+            
         sport_type = attrs.get('sport_type')
         if sport_type and pitch:
             if pitch.sport_type != 'MULTI' and pitch.sport_type != sport_type:
@@ -105,6 +110,11 @@ class MatchCreateSerializer(serializers.ModelSerializer):
         pitch = attrs.get('pitch')
         if not pitch and self.instance:
             pitch = self.instance.pitch
+
+        if pitch and not pitch.is_active:
+            raise serializers.ValidationError({
+                "non_field_errors": "Cannot create a match on a closed pitch."
+            })
 
         sport_type = attrs.get('sport_type')
         if sport_type and pitch:

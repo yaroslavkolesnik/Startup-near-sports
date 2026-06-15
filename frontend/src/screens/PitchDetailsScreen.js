@@ -130,16 +130,9 @@ export default function PitchDetailsScreen({ route, navigation }) {
 
   const fetchMatches = async () => {
     try {
-      const data = await getMatches();
-      const allMatches = Array.isArray(data) ? data : [];
-      
-      // Filter matches to keep only those related to this pitch
-      // If pitch is an object in match, it will be match.pitch?.id, if ID, it will be match.pitch
-      const pitchMatches = allMatches.filter(
-        match => match.pitch === pitch.id || match.pitch?.id === pitch.id
-      );
-      
-      setMatches(pitchMatches);
+      const data = await getMatches(null, '', null, 1, pitch.id || pitch, true);
+      const allMatches = Array.isArray(data?.results || data) ? (data?.results || data) : [];
+      setMatches(allMatches);
     } catch (error) {
       console.error("Error fetching matches for pitch:", error);
     } finally {
@@ -209,6 +202,15 @@ export default function PitchDetailsScreen({ route, navigation }) {
         <Text style={styles.address}>{pitch?.address || t('address_not_specified')}</Text>
         <Text style={styles.creatorName}>{t('added_by')} {pitch?.creator_name || t('unknown_user')}</Text>
 
+        {pitch?.is_active === false && (
+          <View style={styles.closedBanner}>
+            <Ionicons name="warning" size={24} color="#FFF" style={{ marginRight: 8 }} />
+            <Text style={styles.closedBannerText}>
+              Площадка временно закрыта{pitch.status_message ? `: ${pitch.status_message}` : ''}
+            </Text>
+          </View>
+        )}
+
         {pitch?.description ? (
           <View style={styles.descriptionContainer}>
             <Text style={styles.descriptionLabel}>{t('description_label')}</Text>
@@ -232,7 +234,8 @@ export default function PitchDetailsScreen({ route, navigation }) {
             pitchId: pitch?.id || pitch,
             pitchSportType: pitch?.sport_type
           })}
-          style={{ marginTop: 16 }}
+          style={[{ marginTop: 16 }, pitch?.is_active === false && styles.createButtonDisabled]}
+          disabled={pitch?.is_active === false}
         />
 
         {user?.id === (pitch?.created_by?.id || pitch?.created_by) && (
@@ -432,6 +435,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     marginTop: 4,
+  },
+  closedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF3B30',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  closedBannerText: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  createButtonDisabled: {
+    backgroundColor: '#A0A0A0',
+    borderColor: '#A0A0A0',
   },
   matchParticipants: {
     fontSize: 14,
