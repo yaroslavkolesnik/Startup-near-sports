@@ -69,6 +69,9 @@ class Message(models.Model):
         related_name='sent_messages'
     )
     text = models.TextField()
+    is_edited = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    reply_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

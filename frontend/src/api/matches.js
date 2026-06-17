@@ -227,13 +227,44 @@ export const getMatchMessages = async (matchId) => {
     }
 };
 
-export const sendMatchMessage = async (matchId, text) => {
+export const sendMatchMessage = async (matchId, text, replyTo = null) => {
     try {
         const token = await getToken();
         if (!token) throw new Error('Нет токена авторизации');
         
+        const payload = { text };
+        if (replyTo) {
+            payload.reply_to = replyTo;
+        }
+
         const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/messages/`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+        });
+        
+        const json = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(json.error || json.message || `HTTP error! status: ${response.status}`);
+        }
+        return json;
+    } catch (error) {
+        console.log("Error sending message:", error);
+        throw error;
+    }
+};
+
+export const updateMatchMessage = async (matchId, messageId, text) => {
+    try {
+        const token = await getToken();
+        if (!token) throw new Error('Нет токена авторизации');
+        
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/messages/${messageId}/`, {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -248,7 +279,34 @@ export const sendMatchMessage = async (matchId, text) => {
         }
         return json;
     } catch (error) {
-        console.log("Error sending message:", error);
+        console.log("Error updating message:", error);
+        throw error;
+    }
+};
+
+export const deleteMatchMessage = async (matchId, messageId) => {
+    try {
+        const token = await getToken();
+        if (!token) throw new Error('Нет токена авторизации');
+        
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/messages/${messageId}/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+        
+        if (!response.ok) {
+            let errorMsg = `HTTP error! status: ${response.status}`;
+            try {
+                const json = await response.json();
+                errorMsg = json.error || json.message || errorMsg;
+            } catch (e) {}
+            throw new Error(errorMsg);
+        }
+        return true;
+    } catch (error) {
+        console.log("Error deleting message:", error);
         throw error;
     }
 };

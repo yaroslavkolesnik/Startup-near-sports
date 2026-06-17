@@ -163,8 +163,18 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ['id', 'text', 'sender_name', 'sender_avatar', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'text', 'sender_name', 'sender_avatar', 'is_edited', 'updated_at', 'reply_to', 'created_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_edited']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.reply_to:
+            representation['reply_to'] = {
+                'id': instance.reply_to.id,
+                'text': instance.reply_to.text,
+                'sender_name': instance.reply_to.sender.username
+            }
+        return representation
 
     def validate_text(self, value):
         if value:

@@ -19,6 +19,15 @@ class IsOrganizerOrReadOnly(permissions.BasePermission):
             return True
         return obj.organizer == request.user
 
+class IsMessageSender(permissions.BasePermission):
+    """
+    Разрешает удалять и редактировать сообщение только его отправителю.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.sender == request.user
+
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
     filter_backends = [filters.SearchFilter]
@@ -170,3 +179,11 @@ class MatchMessageListCreateView(generics.ListCreateAPIView):
         match = get_object_or_404(Match, id=match_id)
         self.check_match_access(match)
         serializer.save(match=match, sender=self.request.user)
+
+class MatchMessageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated, IsMessageSender]
+    queryset = Message.objects.all()
+
+    def perform_update(self, serializer):
+        serializer.save(is_edited=True)

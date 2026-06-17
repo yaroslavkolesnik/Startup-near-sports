@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { AuthContext } from '../context/AuthContext';
-import { getMatchMessages, sendMatchMessage } from '../api/matches';
+import { getMatchMessages, sendMatchMessage, updateMatchMessage, deleteMatchMessage } from '../api/matches';
 
 export default function MatchChatScreen({ route, navigation }) {
     const { t } = useTranslation();
@@ -15,6 +15,8 @@ export default function MatchChatScreen({ route, navigation }) {
     const [inputText, setInputText] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [editingMsg, setEditingMsg] = useState(null);
     const flatListRef = useRef(null);
 
     useEffect(() => {
@@ -41,17 +43,64 @@ export default function MatchChatScreen({ route, navigation }) {
         if (!inputText.trim() || sending) return;
 
         const textToSend = inputText.trim();
-        setInputText('');
         setSending(true);
 
         try {
-            await sendMatchMessage(matchId, textToSend);
+            if (editingMsg) {
+                await updateMatchMessage(matchId, editingMsg.id, textToSend);
+            } else {
+                await sendMatchMessage(matchId, textToSend, replyingTo ? replyingTo.id : null);
+            }
+            setInputText('');
+            setEditingMsg(null);
+            setReplyingTo(null);
             await fetchMessages();
         } catch (error) {
             console.log("Error sending message:", error);
         } finally {
             setSending(false);
         }
+    };
+
+    const handleLongPress = (message) => {
+        const isMyMessage = user && user.username === message.sender_name;
+        
+        const options = [];
+        options.push({ text: t('reply', 'Ответить'), onPress: () => {
+            setEditingMsg(null);
+            setReplyingTo(message);
+        }});
+        
+        if (isMyMessage) {
+            options.push({ text: t('edit', 'Редактировать'), onPress: () => {
+                setReplyingTo(null);
+                setEditingMsg(message);
+                setInputText(message.text);
+            }});
+            options.push({ text: t('delete', 'Удалить'), style: 'destructive', onPress: () => confirmDelete(message) });
+        }
+        
+        options.push({ text: t('cancel', 'Отмена'), style: 'cancel' });
+        
+        Alert.alert(t('actions', 'Действия'), t('message_actions_desc', 'Что вы хотите сделать с сообщением?'), options);
+    };
+
+    const confirmDelete = (message) => {
+        Alert.alert(
+            t('confirm_delete_title', 'Удалить сообщение?'),
+            t('confirm_delete_desc', 'Это действие нельзя отменить.'),
+            [
+                { text: t('cancel', 'Отмена'), style: 'cancel' },
+                { text: t('delete', 'Удалить'), style: 'destructive', onPress: async () => {
+                    try {
+                        await deleteMatchMessage(matchId, message.id);
+                        await fetchMessages();
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }}
+            ]
+        );
     };
 
     const getAvatarUrl = (path) => {
@@ -64,7 +113,11 @@ export default function MatchChatScreen({ route, navigation }) {
         const isMyMessage = user && user.username === item.sender_name;
         
         return (
-            <View style={[styles.messageWrapper, isMyMessage ? styles.messageWrapperRight : styles.messageWrapperLeft]}>
+            <TouchableOpacity 
+                activeOpacity={0.8}
+                onLongPress={() => handleLongPress(item)}
+                style={[styles.messageWrapper, isMyMessage ? styles.messageWrapperRight : styles.messageWrapperLeft]}
+            >
                 {!isMyMessage && (
                     <View style={styles.avatarContainer}>
                         {item.sender_avatar ? (
@@ -76,17 +129,35 @@ export default function MatchChatScreen({ route, navigation }) {
                 )}
                 
                 <View style={[styles.messageBubble, isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble]}>
+                    {item.reply_to && (
+                        <View style={[styles.quoteBlock, isMyMessage ? styles.myQuoteBlock : styles.otherQuoteBlock]}>
+                            <Text style={[styles.quoteSender, isMyMessage ? styles.myQuoteSender : styles.otherQuoteSender]}>
+                                {item.reply_to.sender_name}
+                            </Text>
+                            <Text style={[styles.quoteText, isMyMessage ? styles.myQuoteText : styles.otherQuoteText]} numberOfLines={2}>
+                                {item.reply_to.text}
+                            </Text>
+                        </View>
+                    )}
+                
                     <Text style={[styles.senderName, isMyMessage ? styles.mySenderName : null]}>
                         {item.sender_name ? item.sender_name.replace(/_/g, ' ') : 'User'}
                     </Text>
                     <Text style={[styles.messageText, isMyMessage ? styles.myMessageText : styles.otherMessageText]}>
                         {item.text}
                     </Text>
-                    <Text style={[styles.timeText, isMyMessage ? styles.myTimeText : styles.otherTimeText]}>
-                        {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
+                    <View style={styles.timeContainer}>
+                        {item.is_edited && (
+                            <Text style={[styles.editedText, isMyMessage ? styles.myEditedText : styles.otherEditedText]}>
+                                {t('edited', '(изменено)')}
+                            </Text>
+                        )}
+                        <Text style={[styles.timeText, isMyMessage ? styles.myTimeText : styles.otherTimeText]}>
+                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                    </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
@@ -113,6 +184,30 @@ export default function MatchChatScreen({ route, navigation }) {
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                 onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
+            
+            { (replyingTo || editingMsg) && (
+                <View style={styles.actionBanner}>
+                    <View style={styles.actionBannerContent}>
+                        <MaterialIcons 
+                            name={editingMsg ? "edit" : "reply"} 
+                            size={20} 
+                            color={theme.colors.primary} 
+                            style={{ marginRight: 8 }} 
+                        />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.actionBannerTitle}>
+                                {editingMsg ? t('editing_message', 'Редактирование') : t('replying_to', 'Ответ: ') + replyingTo.sender_name}
+                            </Text>
+                            <Text style={styles.actionBannerText} numberOfLines={1}>
+                                {editingMsg ? editingMsg.text : replyingTo.text}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity onPress={() => { setReplyingTo(null); setEditingMsg(null); setInputText(''); }}>
+                        <MaterialIcons name="close" size={24} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+                </View>
+            )}
             
             <View style={styles.inputContainer}>
                 <TextInput
@@ -224,6 +319,83 @@ const styles = StyleSheet.create({
     },
     myTimeText: {
         color: 'rgba(255, 255, 255, 0.7)',
+    },
+    quoteBlock: {
+        borderLeftWidth: 3,
+        paddingLeft: 8,
+        paddingVertical: 2,
+        marginBottom: 6,
+        borderRadius: 4,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+    },
+    myQuoteBlock: {
+        borderColor: '#FFF',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    otherQuoteBlock: {
+        borderColor: theme.colors.primary,
+        backgroundColor: 'rgba(0,0,0,0.03)',
+    },
+    quoteSender: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    myQuoteSender: {
+        color: '#FFF',
+    },
+    otherQuoteSender: {
+        color: theme.colors.primary,
+    },
+    quoteText: {
+        fontSize: 12,
+    },
+    myQuoteText: {
+        color: 'rgba(255,255,255,0.8)',
+    },
+    otherQuoteText: {
+        color: theme.colors.textSecondary,
+    },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        marginTop: 4,
+    },
+    editedText: {
+        fontSize: 10,
+        marginRight: 4,
+    },
+    myEditedText: {
+        color: 'rgba(255,255,255,0.6)',
+    },
+    otherEditedText: {
+        color: theme.colors.textSecondary,
+    },
+    actionBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 12,
+        backgroundColor: theme.colors.surface,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+    },
+    actionBannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 12,
+    },
+    actionBannerTitle: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: theme.colors.primary,
+        marginBottom: 2,
+    },
+    actionBannerText: {
+        fontSize: 13,
+        color: theme.colors.textSecondary,
     },
     inputContainer: {
         flexDirection: 'row',
