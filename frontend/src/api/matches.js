@@ -258,6 +258,32 @@ export const sendMatchMessage = async (matchId, text, replyTo = null) => {
     }
 };
 
+export const createRematch = async (matchId, targetStartTime) => {
+    try {
+        const token = await getToken();
+        if (!token) throw new Error('Нет токена авторизации');
+        
+        const response = await fetchWithAuth(`${API_BASE_URL}/matches/${matchId}/rematch/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ target_start_time: targetStartTime }),
+        });
+        
+        const json = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(json.error || json.message || `HTTP error! status: ${response.status}`);
+        }
+        return json;
+    } catch (error) {
+        console.log("Error creating rematch:", error);
+        throw error;
+    }
+};
+
 export const updateMatchMessage = async (matchId, messageId, text) => {
     try {
         const token = await getToken();

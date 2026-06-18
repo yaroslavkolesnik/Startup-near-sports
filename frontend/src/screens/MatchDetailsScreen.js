@@ -4,7 +4,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { AuthContext } from '../context/AuthContext';
-import { joinMatch, leaveMatch, deleteMatch } from '../api/matches';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { joinMatch, leaveMatch, deleteMatch, createRematch, getMatch } from '../api/matches';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
@@ -14,7 +15,27 @@ export default function MatchDetailsScreen({ route, navigation }) {
   const [match, setMatch] = useState(initialMatch);
   const [isJoining, setIsJoining] = useState(false);
   const [isParticipantsModalVisible, setParticipantsModalVisible] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [date, setDate] = useState(new Date(initialMatch?.start_time || Date.now()));
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const { user } = useContext(AuthContext);
+
+  React.useEffect(() => {
+      const loadMatch = async () => {
+          if (match && match.id && !match.title) {
+              setIsLoadingDetails(true);
+              try {
+                  const fullMatch = await getMatch(match.id);
+                  setMatch(fullMatch);
+              } catch (error) {
+                  Alert.alert(t('error'), t('error_loading_match', 'Ошибка загрузки данных матча'));
+              } finally {
+                  setIsLoadingDetails(false);
+              }
+          }
+      };
+      loadMatch();
+  }, [match?.id]);
 
   // Format start time or show placeholder
   const timeFormatted = match?.start_time 
@@ -113,6 +134,39 @@ export default function MatchDetailsScreen({ route, navigation }) {
     );
   };
 
+  const confirmRematch = async (daysToAdd = null, customDate = null) => {
+    setIsJoining(true);
+    try {
+        let targetDate;
+        if (daysToAdd) {
+            targetDate = new Date(match.start_time);
+            targetDate.setDate(targetDate.getDate() + daysToAdd);
+        } else {
+            targetDate = customDate;
+        }
+        
+        const response = await createRematch(match.id, targetDate.toISOString());
+        Alert.alert(t('success'), t('rematch_created_success', 'Повторный матч успешно создан!'));
+    } catch (err) {
+        Alert.alert(t('error'), err.message);
+    } finally {
+        setIsJoining(false);
+    }
+  };
+
+  const handleRematch = () => {
+    Alert.alert(
+      t('rematch_title', 'Повторить матч'),
+      t('rematch_desc', 'Когда вы хотите провести повторную игру?'),
+      [
+        { text: t('cancel', 'Отмена'), style: 'cancel' },
+        { text: t('next_week', 'Через 1 неделю'), onPress: () => confirmRematch(7) },
+        { text: t('two_weeks', 'Через 2 недели'), onPress: () => confirmRematch(14) },
+        { text: t('pick_date', 'Выбрать в календаре'), onPress: () => setShowDatePicker(true) }
+      ]
+    );
+  };
+
   const isUserParticipant = match?.participants?.some(p => (typeof p === 'object' ? p.id : p) === user?.id);
   const isOrganizer = match?.organizer === user?.id;
   const isFull = match?.participants?.length >= match?.max_players || match?.status === 'FULL';
@@ -177,6 +231,14 @@ export default function MatchDetailsScreen({ route, navigation }) {
     );
   };
 
+  if (isLoadingDetails) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Card style={styles.card}>
@@ -231,11 +293,19 @@ export default function MatchDetailsScreen({ route, navigation }) {
       )}
 
       {(isUserParticipant || isOrganizer) && (
-        <Button 
-          title={t('open_match_chat', 'Открыть чат матча')}
-          onPress={() => navigation.navigate('MatchChat', { matchId: match.id, matchTitle: match.title || t(match.sport_type) })}
-          style={{ backgroundColor: '#34C759', marginBottom: 10, borderWidth: 0 }}
-        />
+        <View>
+          <Button 
+            title={t('open_match_chat', 'Открыть чат матча')}
+            onPress={() => navigation.navigate('MatchChat', { matchId: match.id, matchTitle: match.title || t(match.sport_type) })}
+            style={{ backgroundColor: '#34C759', marginBottom: 10, borderWidth: 0 }}
+          />
+          <Button 
+            title={t('rematch_btn', '🔁 Повторить матч')}
+            onPress={handleRematch}
+            disabled={isJoining}
+            style={{ backgroundColor: theme.colors.primary, marginBottom: 10, borderWidth: 0 }}
+          />
+        </View>
       )}
 
       {match?.pitch_is_paid && (
@@ -247,6 +317,24 @@ export default function MatchDetailsScreen({ route, navigation }) {
       )}
 
       {renderActionButtons()}
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="datetime"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(Platform.OS === 'ios');
+            if (selectedDate) {
+              setDate(selectedDate);
+              if (Platform.OS === 'android' || event.type === 'set') {
+                  confirmRematch(null, selectedDate);
+                  setShowDatePicker(false);
+              }
+            }
+          }}
+        />
+      )}
 
       <Modal
         visible={isParticipantsModalVisible}

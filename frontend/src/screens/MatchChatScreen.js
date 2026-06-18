@@ -4,7 +4,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { AuthContext } from '../context/AuthContext';
-import { getMatchMessages, sendMatchMessage, updateMatchMessage, deleteMatchMessage } from '../api/matches';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { getMatchMessages, sendMatchMessage, updateMatchMessage, deleteMatchMessage, createRematch, getMatch } from '../api/matches';
 
 export default function MatchChatScreen({ route, navigation }) {
     const { t } = useTranslation();
@@ -17,10 +18,19 @@ export default function MatchChatScreen({ route, navigation }) {
     const [sending, setSending] = useState(false);
     const [replyingTo, setReplyingTo] = useState(null);
     const [editingMsg, setEditingMsg] = useState(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [date, setDate] = useState(new Date());
     const flatListRef = useRef(null);
 
     useEffect(() => {
-        navigation.setOptions({ title: matchTitle || t('chat_title', 'Чат') });
+        navigation.setOptions({ 
+            title: matchTitle || t('chat_title', 'Чат'),
+            headerRight: () => (
+                <TouchableOpacity onPress={handleRematch} style={{ marginRight: 15 }}>
+                    <MaterialIcons name="repeat" size={24} color={theme.colors.primary} />
+                </TouchableOpacity>
+            )
+        });
 
         fetchMessages();
         const intervalId = setInterval(fetchMessages, 3000);
@@ -37,6 +47,41 @@ export default function MatchChatScreen({ route, navigation }) {
         } finally {
             if (loading) setLoading(false);
         }
+    };
+
+    const confirmRematch = async (daysToAdd = null, customDate = null) => {
+        setSending(true);
+        try {
+            let targetDate;
+            if (daysToAdd) {
+                const matchData = await getMatch(matchId);
+                targetDate = new Date(matchData.start_time);
+                targetDate.setDate(targetDate.getDate() + daysToAdd);
+            } else {
+                targetDate = customDate;
+            }
+            
+            await createRematch(matchId, targetDate.toISOString());
+            Alert.alert(t('success'), t('rematch_created_success', 'Повторный матч успешно создан!'));
+            await fetchMessages();
+        } catch (err) {
+            Alert.alert(t('error'), err.message);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleRematch = () => {
+        Alert.alert(
+            t('rematch_title', 'Повторить матч'),
+            t('rematch_desc', 'Когда вы хотите провести повторную игру?'),
+            [
+                { text: t('cancel', 'Отмена'), style: 'cancel' },
+                { text: t('next_week', 'Через 1 неделю'), onPress: () => confirmRematch(7) },
+                { text: t('two_weeks', 'Через 2 недели'), onPress: () => confirmRematch(14) },
+                { text: t('pick_date', 'Выбрать в календаре'), onPress: () => setShowDatePicker(true) }
+            ]
+        );
     };
 
     const handleSend = async () => {
@@ -109,9 +154,38 @@ export default function MatchChatScreen({ route, navigation }) {
         return `http://192.168.0.67:8000${path}`;
     };
 
+    const inviteRegex = /Матч ID: (\d+)/;
+
     const renderMessage = ({ item }) => {
         const isMyMessage = user && user.username === item.sender_name;
         
+        const inviteMatch = item.text.match(inviteRegex);
+
+        if (inviteMatch) {
+            const newMatchId = inviteMatch[1];
+            return (
+                <View style={styles.inviteCardContainer}>
+                    <View style={styles.inviteCard}>
+                        <View style={styles.inviteCardHeader}>
+                            <MaterialIcons name="event-available" size={24} color="#FFF" />
+                            <Text style={styles.inviteCardTitle}>
+                                 {item.sender_name} {t('created_rematch', 'повторяет игру')}!
+                            </Text>
+                        </View>
+                        <Text style={styles.inviteCardText}>
+                            {item.text.replace(inviteMatch[0], '').trim()}
+                        </Text>
+                        <TouchableOpacity 
+                            style={styles.inviteCardButton}
+                            onPress={() => navigation.navigate('MatchDetails', { match: { id: parseInt(newMatchId) } })}
+                        >
+                            <Text style={styles.inviteCardButtonText}>{t('go_to_match', 'Вступить в новую игру')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            );
+        }
+
         return (
             <TouchableOpacity 
                 activeOpacity={0.8}
@@ -185,6 +259,24 @@ export default function MatchChatScreen({ route, navigation }) {
                 onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
             
+            {showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="datetime"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(Platform.OS === 'ios');
+                    if (selectedDate) {
+                      setDate(selectedDate);
+                      if (Platform.OS === 'android' || event.type === 'set') {
+                          confirmRematch(null, selectedDate);
+                          setShowDatePicker(false);
+                      }
+                    }
+                  }}
+                />
+            )}
+            
             { (replyingTo || editingMsg) && (
                 <View style={styles.actionBanner}>
                     <View style={styles.actionBannerContent}>
@@ -244,6 +336,57 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: theme.colors.background,
+    },
+    inviteCardContainer: {
+        marginVertical: 16,
+        paddingHorizontal: 16,
+        width: '100%',
+        alignItems: 'center',
+    },
+    inviteCard: {
+        width: '100%',
+        backgroundColor: '#4ade80',
+        borderRadius: 20,
+        padding: 16,
+        shadowColor: '#22c55e',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    inviteCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    inviteCardTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#FFF',
+        marginLeft: 8,
+    },
+    inviteCardText: {
+        fontSize: 14,
+        color: '#FFF',
+        marginBottom: 16,
+        lineHeight: 20,
+        opacity: 0.9,
+    },
+    inviteCardButton: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    inviteCardButtonText: {
+        color: '#166534',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     listContent: {
         padding: 16,

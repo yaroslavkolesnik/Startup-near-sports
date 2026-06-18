@@ -142,6 +142,84 @@ class MatchViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "Вы покинули игру"}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='rematch')
+    def rematch(self, request, pk=None):
+        original_match = self.get_object()
+        user = request.user
+        
+        if user not in original_match.participants.all() and user != original_match.organizer:
+            return Response({"error": "Только участники матча могут инициировать повтор."}, status=status.HTTP_403_FORBIDDEN)
+            
+        target_start_time = request.data.get('target_start_time')
+        if not target_start_time:
+            return Response({"error": "Необходимо указать target_start_time."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from django.utils.dateparse import parse_datetime
+        from datetime import timedelta
+        
+        target_dt = parse_datetime(target_start_time)
+        if not target_dt:
+            return Response({"error": "Неверный формат времени."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        new_end_time = target_dt + timedelta(minutes=original_match.duration_minutes)
+        
+        active_matches = Match.objects.filter(
+            pitch=original_match.pitch,
+            start_time__date=target_dt.date()
+        ).exclude(status='CANCELLED')
+        
+        overlapping_count = 0
+        for existing_match in active_matches:
+            existing_start_time = existing_match.start_time
+            existing_end_time = existing_start_time + timedelta(minutes=existing_match.duration_minutes)
+            
+            if existing_start_time < new_end_time and existing_end_time > target_dt:
+                overlapping_count += 1
+                
+        if overlapping_count >= original_match.pitch.fields_count:
+            return Response(
+                {"error": "К сожалению, на это время площадка уже полностью забронирована."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        new_match_data = {
+            'title': original_match.title,
+            'description': original_match.description,
+            'pitch': original_match.pitch.id,
+            'sport_type': original_match.sport_type,
+            'level': original_match.level,
+            'max_players': original_match.max_players,
+            'duration_minutes': original_match.duration_minutes,
+            'start_time': target_start_time,
+        }
+        
+        serializer = MatchCreateSerializer(data=new_match_data, context={'request': request})
+        if serializer.is_valid():
+            new_match = serializer.save(organizer=user)
+            new_match.participants.add(user)
+            
+            # Format datetime safely
+            try:
+                from django.utils.dateparse import parse_datetime
+                dt = parse_datetime(target_start_time)
+                time_str = dt.strftime('%d.%m.%Y %H:%M') if dt else target_start_time
+            except Exception:
+                time_str = target_start_time
+
+            Message.objects.create(
+                match=original_match,
+                sender=user,
+                text=f"Я создал повторную игру на {time_str}! Присоединяйтесь! Матч ID: {new_match.id}"
+            )
+            
+            return Response({
+                "message": "Повторный матч успешно создан", 
+                "match_id": new_match.id,
+                "data": MatchSerializer(new_match, context={'request': request}).data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_matches(self, request):
         queryset = self.filter_queryset(self.get_queryset().filter(

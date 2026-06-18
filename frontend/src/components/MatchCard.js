@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import Card from './ui/Card';
@@ -7,10 +7,19 @@ import ProgressIndicator from './ui/ProgressIndicator';
 import CountdownTimer from './CountdownTimer';
 import WeatherBadge from './WeatherBadge';
 import { theme } from '../theme';
+import { AuthContext } from '../context/AuthContext';
+import { createRematch } from '../api/matches';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const MatchCard = ({ match, onPress, onShare, onChat, pitchLocation }) => {
   const { t } = useTranslation();
+  const { user } = React.useContext(AuthContext);
   const participantsCount = match.participants?.length || 0;
+  const isOrganizer = user && match.organizer === user.id;
+
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [date, setDate] = React.useState(new Date(match.start_time || Date.now()));
+  const [isCreating, setIsCreating] = React.useState(false);
   
   const timeFormatted = match.start_time 
     ? new Date(match.start_time).toLocaleString('ru-RU', { 
@@ -40,6 +49,39 @@ const MatchCard = ({ match, onPress, onShare, onChat, pitchLocation }) => {
     }
   }
 
+  const confirmRematch = async (daysToAdd = null, customDate = null) => {
+    setIsCreating(true);
+    try {
+        let targetDate;
+        if (daysToAdd) {
+            targetDate = new Date(match.start_time);
+            targetDate.setDate(targetDate.getDate() + daysToAdd);
+        } else {
+            targetDate = customDate;
+        }
+        
+        await createRematch(match.id, targetDate.toISOString());
+        Alert.alert(t('success'), t('rematch_created_success', 'Повторный матч успешно создан!'));
+    } catch (err) {
+        Alert.alert(t('error'), err.message);
+    } finally {
+        setIsCreating(false);
+    }
+  };
+
+  const handleRematch = () => {
+    Alert.alert(
+      t('rematch_title', 'Повторить матч'),
+      t('rematch_desc', 'Когда вы хотите провести повторную игру?'),
+      [
+        { text: t('cancel', 'Отмена'), style: 'cancel' },
+        { text: t('next_week', 'Через 1 неделю'), onPress: () => confirmRematch(7) },
+        { text: t('two_weeks', 'Через 2 недели'), onPress: () => confirmRematch(14) },
+        { text: t('pick_date', 'Выбрать в календаре'), onPress: () => setShowDatePicker(true) }
+      ]
+    );
+  };
+
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
       <Card style={{ marginBottom: 12 }}>
@@ -52,6 +94,15 @@ const MatchCard = ({ match, onPress, onShare, onChat, pitchLocation }) => {
                 longitude={pitchLocation.longitude} 
                 startTime={match.start_time} 
               />
+            )}
+            {isOrganizer && (
+              <TouchableOpacity onPress={handleRematch} style={styles.actionIconButton}>
+                {isCreating ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                    <MaterialIcons name="repeat" size={24} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
             )}
             {onChat && (
               <TouchableOpacity onPress={() => onChat(match)} style={styles.actionIconButton}>
@@ -102,6 +153,24 @@ const MatchCard = ({ match, onPress, onShare, onChat, pitchLocation }) => {
             current={participantsCount} 
             max={match.max_players} 
             style={{ marginTop: 8 }} 
+          />
+        )}
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="datetime"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(Platform.OS === 'ios');
+              if (selectedDate) {
+                setDate(selectedDate);
+                if (Platform.OS === 'android' || event.type === 'set') {
+                    confirmRematch(null, selectedDate);
+                    setShowDatePicker(false);
+                }
+              }
+            }}
           />
         )}
       </Card>
