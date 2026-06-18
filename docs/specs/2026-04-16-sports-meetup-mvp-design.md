@@ -58,11 +58,15 @@ Represents the internal chat messages for a specific match.
 * `match` (`ForeignKey` -> `Match`, `related_name='messages'`, `on_delete=models.CASCADE`) - The match this message belongs to.
 * `sender` (`ForeignKey` -> `User`, `on_delete=models.CASCADE`) - The user who sent the message.
 * `text` (`TextField`) - The content of the message.
+* `is_edited` (`BooleanField`, `default=False`) - Flag indicating if the sender modified the text.
+* `reply_to` (`ForeignKey` -> `self`, `on_delete=models.SET_NULL`, `null=True`, `blank=True`, `related_name='replies'`) - References another message this message is replying to.
 * `created_at` (`DateTimeField`, `auto_now_add=True`) - Timestamp of when the message was sent.
+* `updated_at` (`DateTimeField`, `auto_now=True`) - Timestamp of the last edit.
 
 ## Architecture Rules & API Logic
 1.  **Strict Isolation**: `frontend` and `backend` must never share structure. They communicate strictly via REST JSON structure.
 2.  **M2M Limit Enforcement**: The API (Django REST Framework) is responsible for intercepting `Join` requests and verifying that `match.participants.count() < match.max_players`. If met, the request is rejected (400 Bad Request) and `status` is automatically switched to `FULL`.
 3.  **Time Overlap Validation (Multi-Pitch)**: During match creation or editing, the API checks for time collisions. If the number of active overlapping matches (`start_time` to `start_time + duration_minutes`) meets or exceeds the `Pitch.fields_count`, the request is rejected with a validation error.
-4.  **Chat Security**: Messages are accessed via REST API (Short Polling on the frontend). The API strictly enforces that only users present in `match.participants` or the `match.organizer` can read or write messages for that specific match. Unauthorized access returns 403 Forbidden.
-5.  **Client Payload Handling**: Failed validations will return clear error structures (e.g., `{ "error": "Match is full" }` or `{ "non_field_errors": ["..."] }`) that React Native gracefully handles visually with user-friendly alerts.
+4.  **Chat Security & Features**: Messages are accessed via REST API (Short Polling on the frontend). The API strictly enforces that only users present in `match.participants` or the `match.organizer` can read or write messages for that specific match. Unauthorized access returns 403 Forbidden. Senders can Edit or Delete their own messages.
+5.  **Rematch Feature (Повторить матч)**: Organizers and participants can create a copy of an existing match with a new `target_start_time`. The API strictly enforces `Time Overlap Validation` (based on `fields_count`) before allowing the creation. Upon successful creation, the backend automatically posts a system message (acting as an invite card) to the original match chat, linking the players to the newly created game.
+6.  **Client Payload Handling**: Failed validations will return clear error structures (e.g., `{ "error": "Match is full" }` or `{ "non_field_errors": ["..."] }`) that React Native gracefully handles visually with user-friendly alerts.
