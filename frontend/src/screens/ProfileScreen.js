@@ -120,12 +120,6 @@ export default function ProfileScreen({ navigation }) {
           >
             <Text style={[styles.langButtonText, i18n.language === 'en' && styles.langButtonTextActive]}>🇬🇧 ENG</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.langButton, i18n.language === 'ru' && styles.langButtonActive]}
-            onPress={() => i18n.changeLanguage('ru')}
-          >
-            <Text style={[styles.langButtonText, i18n.language === 'ru' && styles.langButtonTextActive]}>🇷🇺 РУС</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
