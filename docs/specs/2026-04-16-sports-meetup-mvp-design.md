@@ -28,7 +28,7 @@ Handles the map locations. Powered by UGC (User Generated Content) for fast orga
 * `surface_type` (`CharField` with choices, optional) - strict values: NATURAL_GRASS, SYNTHETIC_GRASS, PARQUET, ASPHALT, RUBBER, SAND.
 * `is_paid` (`BooleanField`, `default=False`) - Flag indicating if the pitch requires payment.
 * `price_per_hour` (`DecimalField`, `max_digits=8`, `decimal_places=2`, `null=True`, `blank=True`) - Hourly rental price. Mandatory if `is_paid` is True.
-* `fields_count` (`PositiveIntegerField`, `default=1`) - Number of independent fields at the location. Used to allow simultaneous matches without overlap.
+* `fields_breakdown` (`JSONField`, `default=dict`, `blank=True`) - Number of independent fields per sport type at the location (e.g., `{"FOOTBALL": 2, "BASKETBALL": 1}`). Replaces `fields_count` to support MULTI pitches.
 * `created_by` (`ForeignKey` -> `User`, `on_delete=models.SET_NULL`) - Original author of the location.
 * `is_verified` (`BooleanField`, `default=False`) - Admin moderation flag.
 * `is_active` (`BooleanField`, `default=True`) - Flag indicating if the pitch is open for games. If false, it acts as a "closed" status (e.g., under maintenance).
@@ -63,10 +63,19 @@ Represents the internal chat messages for a specific match.
 * `created_at` (`DateTimeField`, `auto_now_add=True`) - Timestamp of when the message was sent.
 * `updated_at` (`DateTimeField`, `auto_now=True`) - Timestamp of the last edit.
 
+### 5. Feedback (`users.Feedback`)
+Allows users to submit ideas or report bugs.
+* `user` (`ForeignKey` -> `User`, `on_delete=models.SET_NULL`, `null=True`, `blank=True`) - Who submitted the feedback (if authenticated).
+* `category` (`CharField` choices: `BUG`, `IDEA`, `OTHER`, `default=OTHER`) - Type of feedback.
+* `text` (`TextField`) - Content of the feedback.
+* `created_at` (`DateTimeField`, `auto_now_add=True`)
+
 ## Architecture Rules & API Logic
 1.  **Strict Isolation**: `frontend` and `backend` must never share structure. They communicate strictly via REST JSON structure.
 2.  **M2M Limit Enforcement**: The API (Django REST Framework) is responsible for intercepting `Join` requests and verifying that `match.participants.count() < match.max_players`. If met, the request is rejected (400 Bad Request) and `status` is automatically switched to `FULL`.
-3.  **Time Overlap Validation (Multi-Pitch)**: During match creation or editing, the API checks for time collisions. If the number of active overlapping matches (`start_time` to `start_time + duration_minutes`) meets or exceeds the `Pitch.fields_count`, the request is rejected with a validation error.
+3.  **Time Overlap Validation (Multi-Pitch)**: During match creation or editing, the API checks for time collisions. If the number of active overlapping matches (`start_time` to `start_time + duration_minutes`) for a specific sport meets or exceeds the capacity defined in `Pitch.fields_breakdown[sport_type]`, the request is rejected with a validation error.
 4.  **Chat Security & Features**: Messages are accessed via REST API (Short Polling on the frontend). The API strictly enforces that only users present in `match.participants` or the `match.organizer` can read or write messages for that specific match. Unauthorized access returns 403 Forbidden. Senders can Edit or Delete their own messages.
-5.  **Rematch Feature (Повторить матч)**: Organizers and participants can create a copy of an existing match with a new `target_start_time`. The API strictly enforces `Time Overlap Validation` (based on `fields_count`) before allowing the creation. Upon successful creation, the backend automatically posts a system message (acting as an invite card) to the original match chat, linking the players to the newly created game.
+5.  **Rematch Feature (Повторить матч)**: Organizers and participants can create a copy of an existing match with a new `target_start_time`. The API strictly enforces `Time Overlap Validation` (based on `fields_breakdown`) before allowing the creation. Upon successful creation, the backend automatically posts a system message (acting as an invite card) to the original match chat, linking the players to the newly created game.
 6.  **Client Payload Handling**: Failed validations will return clear error structures (e.g., `{ "error": "Match is full" }` or `{ "non_field_errors": ["..."] }`) that React Native gracefully handles visually with user-friendly alerts.
+7.  **Authentication & Security**: The frontend securely stores JWT tokens using `expo-secure-store`. Users can change their passwords securely via the `/api/change-password/` endpoint.
+8.  **Localization**: The React Native frontend is localized to support English (en) and Ukrainian (uk) out of the box.

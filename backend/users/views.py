@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from .models import UserModel, Feedback
-from .serializers import UserSerializer, UserRegistrationSerializer, UserProfileUpdateSerializer, FeedbackSerializer
+from .serializers import UserSerializer, UserRegistrationSerializer, UserProfileUpdateSerializer, FeedbackSerializer, PasswordChangeSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 #from rest_framework.permissions import IsAdminUser
@@ -41,6 +41,17 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"data": UserSerializer(request.user).data})
+
+class PasswordChangeView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+        return Response({"data": {"message": "Пароль успішно змінено"}}, status=200)
 
 class FeedbackCreateView(generics.CreateAPIView):
     queryset = Feedback.objects.all()

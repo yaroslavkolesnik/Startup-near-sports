@@ -18,6 +18,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
 import MatchChatScreen from '../screens/MatchChatScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
 import { useTranslation } from 'react-i18next';
@@ -171,6 +172,11 @@ export default function AppNavigator() {
         name="Feedback" 
         component={FeedbackScreen} 
         options={{ title: "Зв'язатися з адміністратором" }} 
+      />
+      <Stack.Screen 
+        name="ChangePassword" 
+        component={ChangePasswordScreen} 
+        options={{ title: "Змінити пароль" }} 
       />
     </Stack.Navigator>
   );

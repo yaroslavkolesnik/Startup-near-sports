@@ -208,3 +208,35 @@ export const updateUserProfile = async (data) => {
 
   return response.json();
 };
+
+export const changePassword = async (oldPassword, newPassword) => {
+  const token = await getToken();
+  if (!token) throw new Error('Нет токена авторизации');
+
+  const response = await fetchWithAuth(`${API_BASE_URL}/change-password/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Помилка зміни пароля';
+    try {
+      const errorData = await response.json();
+      if (errorData.detail) errorMessage = errorData.detail;
+      else if (errorData.old_password) errorMessage = errorData.old_password[0];
+      else if (errorData.new_password) errorMessage = errorData.new_password[0];
+      else if (typeof errorData === 'object' && !Array.isArray(errorData)) {
+         const firstKey = Object.keys(errorData)[0];
+         if(Array.isArray(errorData[firstKey])) {
+             errorMessage = errorData[firstKey][0];
+         }
+      }
+    } catch (e) { }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};

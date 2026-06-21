@@ -39,6 +39,16 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         model = UserModel
         fields = ['username', 'avatar', 'sport_skills', 'preferred_sports', 'expo_push_token']
 
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Неправильний старий пароль.")
+        return value
+
 class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feedback
