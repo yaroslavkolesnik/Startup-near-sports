@@ -165,6 +165,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         
         active_matches = Match.objects.filter(
             pitch=original_match.pitch,
+            sport_type=original_match.sport_type,
             start_time__date=target_dt.date()
         ).exclude(status='CANCELLED')
         
@@ -176,7 +177,8 @@ class MatchViewSet(viewsets.ModelViewSet):
             if existing_start_time < new_end_time and existing_end_time > target_dt:
                 overlapping_count += 1
                 
-        if overlapping_count >= original_match.pitch.fields_count:
+        allowed_count = original_match.pitch.fields_breakdown.get(original_match.sport_type, 1)
+        if overlapping_count >= allowed_count:
             return Response(
                 {"error": "К сожалению, на это время площадка уже полностью забронирована."}, 
                 status=status.HTTP_400_BAD_REQUEST

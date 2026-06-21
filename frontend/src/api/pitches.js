@@ -63,7 +63,12 @@ export const createPitch = async (pitchData, photos) => {
         if (photos && photos.length > 0) {
             const formData = new FormData();
             for (let key in formattedPitchData) {
-                formData.append(key, String(formattedPitchData[key]));
+                if (formattedPitchData[key] === null) continue;
+                if (key === 'fields_breakdown') {
+                    formData.append(key, JSON.stringify(formattedPitchData[key]));
+                } else {
+                    formData.append(key, String(formattedPitchData[key]));
+                }
             }
             photos.forEach((photoUri, index) => {
                 formData.append('photos', {
@@ -149,7 +154,12 @@ export const updatePitch = async (id, pitchData, photos) => {
         if (photos && photos.length > 0) {
             const formData = new FormData();
             for (let key in formattedPitchData) {
-                formData.append(key, String(formattedPitchData[key]));
+                if (formattedPitchData[key] === null && key !== 'status_message') continue;
+                if (key === 'fields_breakdown') {
+                    formData.append(key, JSON.stringify(formattedPitchData[key]));
+                } else {
+                    formData.append(key, String(formattedPitchData[key] === null ? '' : formattedPitchData[key]));
+                }
             }
             photos.forEach((photoUri, index) => {
                 // If the URI is a local file (e.g. from ImagePicker), we add it as a file.

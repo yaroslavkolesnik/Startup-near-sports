@@ -24,7 +24,21 @@ export default function CreatePitchScreen({ navigation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState('');
-  const [fieldsCount, setFieldsCount] = useState('1');
+  const [fieldsBreakdown, setFieldsBreakdown] = useState({});
+
+  const updateBreakdown = (sport, count) => {
+    setFieldsBreakdown(prev => {
+      const updated = { ...prev, [sport]: count };
+      if (count <= 0) {
+        delete updated[sport];
+      }
+      return updated;
+    });
+  };
+
+  const getBreakdownCount = (sport) => {
+    return fieldsBreakdown[sport] || 0;
+  };
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -57,7 +71,6 @@ export default function CreatePitchScreen({ navigation }) {
 
     setIsSubmitting(true);
     try {
-      const parsedFieldsCount = parseInt(fieldsCount, 10) || 1;
       const pitchData = {
         title,
         address,
@@ -66,9 +79,10 @@ export default function CreatePitchScreen({ navigation }) {
         sport_type: sportType,
         surface_type: surfaceType,
         description,
+        is_active: true,
         is_paid: isPaid,
         price_per_hour: isPaid ? parseFloat(price) : null,
-        fields_count: parsedFieldsCount,
+        fields_breakdown: sportType === 'MULTI' ? fieldsBreakdown : { [sportType]: Math.max(1, fieldsBreakdown[sportType] || 1) },
       };
 
       await createPitch(pitchData, photos);
@@ -171,13 +185,52 @@ export default function CreatePitchScreen({ navigation }) {
           />
         )}
 
-        <Input 
-          label={t('fields_count_label')}
-          value={fieldsCount} 
-          onChangeText={setFieldsCount} 
-          placeholder={t('fields_count_label')} 
-          keyboardType="numeric" 
-        />
+        <Text style={styles.sectionTitle}>{t('setup_fields_for_multi', 'Настройка полей (вместимость площадки)')}</Text>
+        {sportType === 'MULTI' ? (
+          <View style={styles.multiBreakdownContainer}>
+            {PITCH_SPORT_KEYS.filter(s => s !== 'MULTI').map(sport => (
+              <View key={sport} style={styles.counterRow}>
+                <Text style={styles.counterLabel}>{t(sport)}</Text>
+                <View style={styles.counterControls}>
+                  <TouchableOpacity 
+                    style={styles.counterBtn} 
+                    onPress={() => updateBreakdown(sport, Math.max(0, getBreakdownCount(sport) - 1))}
+                  >
+                    <Text style={styles.counterBtnText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.counterValue}>{getBreakdownCount(sport)}</Text>
+                  <TouchableOpacity 
+                    style={styles.counterBtn} 
+                    onPress={() => updateBreakdown(sport, getBreakdownCount(sport) + 1)}
+                  >
+                    <Text style={styles.counterBtnText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.multiBreakdownContainer}>
+            <View style={styles.counterRow}>
+              <Text style={styles.counterLabel}>{t('fields_count_label')}</Text>
+              <View style={styles.counterControls}>
+                <TouchableOpacity 
+                  style={styles.counterBtn} 
+                  onPress={() => updateBreakdown(sportType, Math.max(1, (fieldsBreakdown[sportType] || 1) - 1))}
+                >
+                  <Text style={styles.counterBtnText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterValue}>{fieldsBreakdown[sportType] || 1}</Text>
+                <TouchableOpacity 
+                  style={styles.counterBtn} 
+                  onPress={() => updateBreakdown(sportType, (fieldsBreakdown[sportType] || 1) + 1)}
+                >
+                  <Text style={styles.counterBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
 
         <Input 
           label={t('description_optional_label')}
@@ -236,4 +289,11 @@ const styles = StyleSheet.create({
   picker: { width: '100%', color: theme.colors.text },
   switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
   switchLabel: { fontSize: 16, color: theme.colors.text, fontWeight: '600' },
+  multiBreakdownContainer: { backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, marginBottom: 16 },
+  counterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8 },
+  counterLabel: { fontSize: 16, color: theme.colors.text },
+  counterControls: { flexDirection: 'row', alignItems: 'center' },
+  counterBtn: { backgroundColor: theme.colors.surfaceContainer, width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  counterBtnText: { fontSize: 20, color: theme.colors.primary, fontWeight: 'bold' },
+  counterValue: { fontSize: 18, fontWeight: 'bold', width: 40, textAlign: 'center', color: theme.colors.text },
 });

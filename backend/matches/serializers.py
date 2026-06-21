@@ -51,6 +51,9 @@ class MatchSerializer(serializers.ModelSerializer):
             })
             
         sport_type = attrs.get('sport_type')
+        if not sport_type and self.instance:
+            sport_type = self.instance.sport_type
+            
         if sport_type and pitch:
             if pitch.sport_type != 'MULTI' and pitch.sport_type != sport_type:
                 raise serializers.ValidationError({
@@ -65,11 +68,12 @@ class MatchSerializer(serializers.ModelSerializer):
         if not duration_minutes and self.instance:
             duration_minutes = self.instance.duration_minutes
             
-        if start_time and duration_minutes and pitch:
+        if start_time and duration_minutes and pitch and sport_type:
             new_end_time = start_time + timedelta(minutes=duration_minutes)
             
             active_matches = Match.objects.filter(
                 pitch=pitch,
+                sport_type=sport_type,
                 status__in=['OPEN', 'FULL'],
                 start_time__date=start_time.date()
             )
@@ -84,9 +88,10 @@ class MatchSerializer(serializers.ModelSerializer):
                 if existing_start_time < new_end_time and existing_end_time > start_time:
                     overlapping_count += 1
                     
-            if overlapping_count >= pitch.fields_count:
+            allowed_count = pitch.fields_breakdown.get(sport_type, 1)
+            if overlapping_count >= allowed_count:
                 raise serializers.ValidationError({
-                    "non_field_errors": "К сожалению, все поля на этой площадке заняты на выбранное время."
+                    "non_field_errors": "К сожалению, на это время площадка уже полностью забронирована."
                 })
 
         return attrs
@@ -117,6 +122,9 @@ class MatchCreateSerializer(serializers.ModelSerializer):
             })
 
         sport_type = attrs.get('sport_type')
+        if not sport_type and self.instance:
+            sport_type = self.instance.sport_type
+            
         if sport_type and pitch:
             if pitch.sport_type != 'MULTI' and pitch.sport_type != sport_type:
                 raise serializers.ValidationError({
@@ -131,11 +139,12 @@ class MatchCreateSerializer(serializers.ModelSerializer):
         if not duration_minutes and self.instance:
             duration_minutes = self.instance.duration_minutes
             
-        if start_time and duration_minutes and pitch:
+        if start_time and duration_minutes and pitch and sport_type:
             new_end_time = start_time + timedelta(minutes=duration_minutes)
             
             active_matches = Match.objects.filter(
                 pitch=pitch,
+                sport_type=sport_type,
                 status__in=['OPEN', 'FULL'],
                 start_time__date=start_time.date()
             )
@@ -150,9 +159,10 @@ class MatchCreateSerializer(serializers.ModelSerializer):
                 if existing_start_time < new_end_time and existing_end_time > start_time:
                     overlapping_count += 1
                     
-            if overlapping_count >= pitch.fields_count:
+            allowed_count = pitch.fields_breakdown.get(sport_type, 1)
+            if overlapping_count >= allowed_count:
                 raise serializers.ValidationError({
-                    "non_field_errors": "К сожалению, все поля на этой площадке заняты на выбранное время."
+                    "non_field_errors": "К сожалению, на это время площадка уже полностью забронирована."
                 })
 
         return attrs

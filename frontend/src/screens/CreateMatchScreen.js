@@ -10,10 +10,16 @@ import Button from '../components/ui/Button';
 
 export default function CreateMatchScreen({ route, navigation }) {
     const { t } = useTranslation();
-    const { pitchId, pitchSportType } = route.params;
+    const { pitchId, pitchSportType, pitchFieldsBreakdown } = route.params;
+
+    const initialSport = (pitchSportType && pitchSportType !== 'MULTI') 
+        ? pitchSportType 
+        : (pitchFieldsBreakdown && Object.keys(pitchFieldsBreakdown).length > 0)
+            ? Object.keys(pitchFieldsBreakdown)[0]
+            : 'FOOTBALL';
 
     const [title, setTitle] = useState('');
-    const [sportType, setSportType] = useState(pitchSportType && pitchSportType !== 'MULTI' ? pitchSportType : 'FOOTBALL');
+    const [sportType, setSportType] = useState(initialSport);
     const [level, setLevel] = useState('ANY');
     const [maxPlayers, setMaxPlayers] = useState('');
     const [durationMinutes, setDurationMinutes] = useState('90');
@@ -119,6 +125,9 @@ export default function CreateMatchScreen({ route, navigation }) {
                 <View style={styles.badgesContainer}>
                     {SPORT_KEYS.map(sport => {
                         if (pitchSportType && pitchSportType !== 'MULTI' && sport !== pitchSportType) {
+                            return null;
+                        }
+                        if (pitchSportType === 'MULTI' && pitchFieldsBreakdown && !pitchFieldsBreakdown[sport]) {
                             return null;
                         }
                         const isSelected = sportType === sport;

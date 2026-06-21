@@ -198,7 +198,28 @@ export default function PitchDetailsScreen({ route, navigation }) {
           </View>
         )}
         <Text style={styles.title}>{pitch?.title || t('untitled')}</Text>
-        <Text style={styles.sportType}>{pitch?.sport_type ? t(pitch.sport_type) : t('not_specified')}</Text>
+        
+        {pitch?.sport_type === 'MULTI' && pitch?.fields_breakdown ? (
+          <View style={styles.breakdownContainer}>
+            {Object.entries(pitch.fields_breakdown).map(([sport, count]) => {
+              const sportEmojis = {
+                'FOOTBALL': '⚽', 'BASKETBALL': '🏀', 'PING_PONG': '🏓', 'VOLLEYBALL': '🏐',
+                'TENNIS': '🎾', 'WORKOUT': '💪', 'RUNNING': '🏃', 'CYCLING': '🚲',
+                'YOGA': '🧘', 'PADEL': '🎾', 'CHESS': '♟️', 'CHECKERS': '🏁',
+                'BOXING': '🥊', 'SWIMMING': '🏊', 'GYM': '🏋️', 'MULTI': '🏟️'
+              };
+              const emoji = sportEmojis[sport] || '🏟️';
+              return (
+                <View key={sport} style={styles.breakdownChip}>
+                  <Text style={styles.breakdownChipText}>{emoji} {count}</Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.sportType}>{pitch?.sport_type ? t(pitch.sport_type) : t('not_specified')}</Text>
+        )}
+
         <Text style={styles.address}>{pitch?.address || t('address_not_specified')}</Text>
         <Text style={styles.creatorName}>{t('added_by')} {pitch?.creator_name || t('unknown_user')}</Text>
 
@@ -232,7 +253,8 @@ export default function PitchDetailsScreen({ route, navigation }) {
           title={t('create_game_here')}
           onPress={() => navigation.navigate('CreateMatch', { 
             pitchId: pitch?.id || pitch,
-            pitchSportType: pitch?.sport_type
+            pitchSportType: pitch?.sport_type,
+            pitchFieldsBreakdown: pitch?.fields_breakdown
           })}
           style={[{ marginTop: 16 }, pitch?.is_active === false && styles.createButtonDisabled]}
           disabled={pitch?.is_active === false}
@@ -426,6 +448,25 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '600',
     marginBottom: 4,
+  },
+  breakdownContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+    gap: 8,
+  },
+  breakdownChip: {
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 199, 89, 0.3)',
+  },
+  breakdownChipText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    fontWeight: 'bold',
   },
   address: {
     fontSize: 14,

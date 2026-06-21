@@ -40,7 +40,7 @@ class Pitch(models.Model):
     photos = models.JSONField(default=list, blank=True)
     is_paid = models.BooleanField(default=False, verbose_name="Платная площадка")
     price_per_hour = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Цена за час")
-    fields_count = models.PositiveIntegerField(default=1, help_text="Количество независимых полей на площадке")
+    fields_breakdown = models.JSONField(default=dict, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

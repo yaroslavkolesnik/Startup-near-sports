@@ -1,54 +1,36 @@
-# Sports Meetup Mobile App: Security Audit Report
+# Security Audit Report: Sports Meetup MVP
 
-**Date:** 2026-06-13
-**Tool:** AI Security Tester (OWASP Mobile & API Top 10)
+**Date:** 2026-06-21
+**Scope:** Frontend (React Native) and Backend (Django/DRF)
 
-During the automated source code analysis of the project's MVP (Frontend: React Native, Backend: Django DRF), the following architectural decisions, vulnerabilities, and security gaps were identified.
+## 1. Vulnerabilities Found
 
----
+### Backend (Django/DRF)
+1. **Insecure SECRET_KEY Fallback:** 
+   In `config/settings.py`, `SECRET_KEY` falls back to `'django-insecure-default'`. If deployed without setting the environment variable, the application is highly vulnerable to session hijacking and cryptographic attacks.
+2. **Wildcard ALLOWED_HOSTS:** 
+   `ALLOWED_HOSTS` defaults to `*`. This exposes the application to HTTP Host header attacks and DNS rebinding attacks.
+3. **Overly Permissive CORS:**
+   `CORS_ALLOW_ALL_ORIGINS = True` allows any website to make requests to the API. This can lead to unauthorized data access if combined with authenticated browser sessions.
+4. **Missing HTTPS/SSL Enforcement:**
+   Production security settings like `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, and `CSRF_COOKIE_SECURE` are missing, meaning data could potentially be sent over unencrypted connections if not handled by a reverse proxy.
 
-## 🟢 Positive Findings (What was done well)
-* **Secure Token Storage:** The frontend uses `expo-secure-store` to store JWTs (Access and Refresh tokens), protecting them from extraction by malicious actors. `AsyncStorage` is not used for critical data.
-* **SQL Injection Protection:** The backend exclusively uses the Django ORM, which automatically parameterizes SQL queries and neutralizes code injection threats.
-* **Password Validation:** Standard password validators (`MinimumLengthValidator`, `NumericPasswordValidator`, etc.) are enabled in `settings.py` and are correctly invoked in the registration serializer.
-* **Session Isolation (Throttling):** Rate Limiting is configured in DRF settings (5 requests per minute for anonymous users, 120 for authenticated users), which protects against brute-force and basic-level DDoS attacks.
+### Frontend (React Native)
+1. **Hardcoded HTTP API URL:**
+   In `src/api/auth.js` and other API files, `API_BASE_URL` is hardcoded to `http://192.168.0.67:8000/api`. Using `http://` instead of `https://` transmits sensitive data (passwords, JWT tokens) in plaintext, making it susceptible to Man-in-the-Middle (MitM) attacks.
 
----
+## 2. Security Strengths (Gaps Addressed)
+- **Token Storage:** The frontend correctly uses `expo-secure-store` (`SecureStore`) to store JWT tokens instead of the insecure `AsyncStorage`.
+- **Throttling:** DRF is configured with `AnonRateThrottle` (5/min) and `UserRateThrottle` (120/min), which helps prevent brute-force attacks on endpoints.
+- **Permissions:** API views correctly utilize DRF permissions like `IsAuthenticated`, `IsCreatorOrReadOnly`, and `IsMessageSender`.
 
-## 🔴 Vulnerabilities and Critical Gaps
+## 3. Required Improvements (Remediation)
 
-> [!WARNING]
-> The following vulnerabilities must be resolved prior to the production release (App Store / Google Play).
+### Backend Remediation (`config/settings.py`):
+- Remove the insecure fallback for `SECRET_KEY` (or raise an error if not set in production).
+- Set a strict `ALLOWED_HOSTS` list instead of `*`.
+- Set `CORS_ALLOW_ALL_ORIGINS = False` and define `CORS_ALLOWED_ORIGINS` or `CORS_ALLOW_CREDENTIALS`.
+- Add Django security settings (`SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`).
 
-### 1. Cleartext Data Transmission (HTTP)
-**Component:** Frontend (`src/api/auth.js`, `src/api/pitches.js`, etc.)
-**Description:** The base API URL is hardcoded as `http://192.168.0.67:8000/api`. Using the HTTP protocol means that all data, including passwords during registration/login and JWT tokens, are transmitted in cleartext and can be intercepted via a "Man-in-the-Middle" (MitM) attack.
-**Required Improvement:** - Migrate the production server to HTTPS (with an SSL/TLS certificate configuration).
-- Move the URL configuration to `.env` files (e.g., using `react-native-dotenv`) to use HTTP locally and strictly HTTPS in production.
-
-### 2. Overly Permissive CORS Policy (Cross-Origin Resource Sharing)
-**Component:** Backend (`config/settings.py`)
-**Description:** The `CORS_ALLOW_ALL_ORIGINS = True` parameter allows requests to your API from any domain name. Although mobile applications ignore CORS, if the API becomes public or vulnerable to web attacks (CSRF from other sites), this creates a massive security gap.
-**Required Improvement:** - Set `CORS_ALLOW_ALL_ORIGINS = False`.
-- Configure `CORS_ALLOWED_ORIGINS` exclusively for trusted domains (if a web version of the admin panel is planned).
-
-### 3. Insecure Host Configurations (ALLOWED_HOSTS)
-**Component:** Backend (`config/settings.py`)
-**Description:** `ALLOWED_HOSTS` defaults to `*` (`os.environ.get('ALLOWED_HOSTS', '*').split(',')`). In production, this makes the server vulnerable to HTTP Host Header Injection attacks, which can lead to password reset spoofing or cache poisoning.
-**Required Improvement:** In a production environment, the `ALLOWED_HOSTS` variable must strictly contain only the server's IP address and its domain name.
-
-### 4. Risk of Using the Default SECRET_KEY
-**Component:** Backend (`config/settings.py`)
-**Description:** The `SECRET_KEY` falls back to `'django-insecure-default'` if the environment variable is not set. If the server is accidentally deployed without a properly configured `.env`, attackers could forge sessions and tokens.
-**Required Improvement:** Wrap the key retrieval in production within a block that raises an error if the key is missing, or use a package like `django-environ`.
-
----
-
-## 🟡 Architectural Recommendations (Improvements)
-
-> [!TIP]
-> Recommendations to increase the security maturity level (Defense in Depth).
-
-1. **SSL Pinning:** To protect against advanced MitM attacks on compromised devices, consider implementing SSL Pinning on the frontend (e.g., via the `react-native-ssl-pinning` library).
-2. **Deep Links Validation:** If Deep Links are implemented in the app (e.g., for sharing matches), incoming URL parameters must be strictly validated before parsing and using them in the app (to prevent JS-level XSS/injections).
-3. **Token Rotation (Refresh Token Reuse):** In the current token implementation (`SIMPLE_JWT`), the Refresh token lifetime is 7 days. It is advisable to add the `ROTATE_REFRESH_TOKENS = True` check in the DRF Simple JWT settings so that a new refresh token is issued (invalidating the old one) each time the access token is refreshed, thereby minimizing the risks of session hijacking.
+### Frontend Remediation:
+- Change the `API_BASE_URL` to use environment variables (`process.env.EXPO_PUBLIC_API_URL`) to seamlessly switch between local `http://` for development and secure `https://` for production.

@@ -25,9 +25,23 @@ export default function EditPitchScreen({ route, navigation }) {
   const [photos, setPhotos] = useState(pitch.photos || []);
   const [photosUpdated, setPhotosUpdated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fieldsCount, setFieldsCount] = useState(pitch.fields_count ? String(pitch.fields_count) : '1');
+  const [fieldsBreakdown, setFieldsBreakdown] = useState(pitch.fields_breakdown || {});
   const [isActive, setIsActive] = useState(pitch.is_active !== false); // Default to true if undefined
   const [statusMessage, setStatusMessage] = useState(pitch.status_message || '');
+
+  const updateBreakdown = (sport, count) => {
+    setFieldsBreakdown(prev => {
+      const updated = { ...prev, [sport]: count };
+      if (count <= 0) {
+        delete updated[sport];
+      }
+      return updated;
+    });
+  };
+
+  const getBreakdownCount = (sport) => {
+    return fieldsBreakdown[sport] || 0;
+  };
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -58,7 +72,6 @@ export default function EditPitchScreen({ route, navigation }) {
 
     setIsSubmitting(true);
     try {
-      const parsedFieldsCount = parseInt(fieldsCount, 10) || 1;
       const pitchData = {
         title,
         address,
@@ -67,7 +80,7 @@ export default function EditPitchScreen({ route, navigation }) {
         sport_type: sportType,
         surface_type: surfaceType,
         description,
-        fields_count: parsedFieldsCount,
+        fields_breakdown: sportType === 'MULTI' ? fieldsBreakdown : { [sportType]: Math.max(1, fieldsBreakdown[sportType] || 1) },
         is_active: isActive,
         status_message: !isActive ? statusMessage : null, // Only send message if closed
       };
@@ -158,13 +171,52 @@ export default function EditPitchScreen({ route, navigation }) {
           </Picker>
         </View>
 
-        <Input 
-          label={t('fields_count_label')}
-          value={fieldsCount} 
-          onChangeText={setFieldsCount} 
-          placeholder={t('fields_count_label')} 
-          keyboardType="numeric" 
-        />
+        <Text style={styles.sectionTitle}>{t('setup_fields_for_multi', 'Настройка полей (вместимость площадки)')}</Text>
+        {sportType === 'MULTI' ? (
+          <View style={styles.multiBreakdownContainer}>
+            {PITCH_SPORT_KEYS.filter(s => s !== 'MULTI').map(sport => (
+              <View key={sport} style={styles.counterRow}>
+                <Text style={styles.counterLabel}>{t(sport)}</Text>
+                <View style={styles.counterControls}>
+                  <TouchableOpacity 
+                    style={styles.counterBtn} 
+                    onPress={() => updateBreakdown(sport, Math.max(0, getBreakdownCount(sport) - 1))}
+                  >
+                    <Text style={styles.counterBtnText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.counterValue}>{getBreakdownCount(sport)}</Text>
+                  <TouchableOpacity 
+                    style={styles.counterBtn} 
+                    onPress={() => updateBreakdown(sport, getBreakdownCount(sport) + 1)}
+                  >
+                    <Text style={styles.counterBtnText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.multiBreakdownContainer}>
+            <View style={styles.counterRow}>
+              <Text style={styles.counterLabel}>{t('fields_count_label')}</Text>
+              <View style={styles.counterControls}>
+                <TouchableOpacity 
+                  style={styles.counterBtn} 
+                  onPress={() => updateBreakdown(sportType, Math.max(1, (fieldsBreakdown[sportType] || 1) - 1))}
+                >
+                  <Text style={styles.counterBtnText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterValue}>{fieldsBreakdown[sportType] || 1}</Text>
+                <TouchableOpacity 
+                  style={styles.counterBtn} 
+                  onPress={() => updateBreakdown(sportType, (fieldsBreakdown[sportType] || 1) + 1)}
+                >
+                  <Text style={styles.counterBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
 
         <View style={styles.switchContainer}>
           <Text style={styles.switchLabel}>{t('pitch_is_active_label', 'Площадка открыта для игр')}</Text>
@@ -242,4 +294,11 @@ const styles = StyleSheet.create({
   picker: { width: '100%', color: theme.colors.text },
   switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, marginTop: 8 },
   switchLabel: { ...theme.typography.labelMedium, color: theme.colors.text, fontSize: 16 },
+  multiBreakdownContainer: { backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, marginBottom: 16 },
+  counterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8 },
+  counterLabel: { fontSize: 16, color: theme.colors.text },
+  counterControls: { flexDirection: 'row', alignItems: 'center' },
+  counterBtn: { backgroundColor: theme.colors.surfaceContainer, width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  counterBtnText: { fontSize: 20, color: theme.colors.primary, fontWeight: 'bold' },
+  counterValue: { fontSize: 18, fontWeight: 'bold', width: 40, textAlign: 'center', color: theme.colors.text },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Linking, Modal, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Linking, Modal, FlatList, Image, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
@@ -240,7 +240,11 @@ export default function MatchDetailsScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
       <Card style={styles.card}>
         <Text style={styles.title}>{match?.title || t('untitled')}</Text>
         
@@ -397,7 +401,7 @@ export default function MatchDetailsScreen({ route, navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -406,7 +410,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
     padding: 16,
-    justifyContent: 'space-between',
   },
   card: {
     marginBottom: 20,
