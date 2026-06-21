@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import UserModel
+from .models import UserModel, Feedback
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,3 +38,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ['username', 'avatar', 'sport_skills', 'preferred_sports', 'expo_push_token']
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'user', 'category', 'text', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']

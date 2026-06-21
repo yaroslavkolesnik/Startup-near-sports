@@ -17,6 +17,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
 import MatchChatScreen from '../screens/MatchChatScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
 import { AuthContext } from '../context/AuthContext';
 import { theme } from '../theme';
 import { useTranslation } from 'react-i18next';
@@ -165,6 +166,11 @@ export default function AppNavigator() {
         name="MatchChat" 
         component={MatchChatScreen} 
         options={{ title: t('chat_title', 'Чат') }} 
+      />
+      <Stack.Screen 
+        name="Feedback" 
+        component={FeedbackScreen} 
+        options={{ title: "Зв'язатися з адміністратором" }} 
       />
     </Stack.Navigator>
   );

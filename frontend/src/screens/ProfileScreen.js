@@ -99,6 +99,13 @@ export default function ProfileScreen({ navigation }) {
           style={{ marginBottom: 12 }}
         />
 
+        <Button 
+          title="Зв'язатися з адміністратором"
+          variant="secondary"
+          onPress={() => navigation.navigate('Feedback')}
+          style={{ marginBottom: 12 }}
+        />
+
         <TouchableOpacity style={styles.logoutMinimalButton} onPress={signOut}>
           <Ionicons name="log-out-outline" size={22} color="#FF3B30" style={{ marginRight: 6 }} />
           <Text style={styles.logoutMinimalText}>{t('logout')}</Text>

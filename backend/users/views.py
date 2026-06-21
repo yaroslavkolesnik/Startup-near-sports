@@ -1,8 +1,8 @@
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from .models import UserModel
-from .serializers import UserSerializer, UserRegistrationSerializer, UserProfileUpdateSerializer
+from .models import UserModel, Feedback
+from .serializers import UserSerializer, UserRegistrationSerializer, UserProfileUpdateSerializer, FeedbackSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 #from rest_framework.permissions import IsAdminUser
@@ -41,3 +41,12 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"data": UserSerializer(request.user).data})
+
+class FeedbackCreateView(generics.CreateAPIView):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(user=user)
