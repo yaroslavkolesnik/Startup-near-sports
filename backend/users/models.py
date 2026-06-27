@@ -6,6 +6,8 @@ class UserModel(AbstractUser):
     sport_skills = models.JSONField(default=dict, blank=True)
     preferred_sports = models.CharField(max_length=255, blank=True)
     expo_push_token = models.CharField(max_length=255, blank=True, null=True)
+    reset_pin = models.CharField(max_length=6, blank=True, null=True)
+    reset_pin_expires = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

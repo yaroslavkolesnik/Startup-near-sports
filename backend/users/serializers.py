@@ -49,6 +49,21 @@ class PasswordChangeSerializer(serializers.Serializer):
             raise serializers.ValidationError("Неправильний старий пароль.")
         return value
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    pin_code = serializers.CharField(max_length=6, required=True)
+    new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
 class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feedback
