@@ -15,6 +15,8 @@ import CreatePitchScreen from '../screens/CreatePitchScreen';
 import EditPitchScreen from '../screens/EditPitchScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import ResetPasswordConfirmScreen from '../screens/ResetPasswordConfirmScreen';
 import PublicProfileScreen from '../screens/PublicProfileScreen';
 import MatchChatScreen from '../screens/MatchChatScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
@@ -82,6 +84,8 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPasswordConfirm" component={ResetPasswordConfirmScreen} />
     </Stack.Navigator>
   );
 }

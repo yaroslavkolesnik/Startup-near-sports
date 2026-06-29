@@ -13,6 +13,8 @@ Extends standard Django `AbstractUser` to retain standard authentication feature
 * `sport_skills` (`JSONField`, `default=dict`,`blank=True`) - Stores skill level per sport. Example: `{"FOOTBALL": "PRO", "PING_PONG": "BEGINNER"}`.
 * `preferred_sports` (`CharField`, `max_length=255`, `blank=True`) - Comma-separated active sports (e.g., `'football,basketball'`) to avoid complex M2M tables initially.
 * `expo_push_token` (`CharField`, `max_length=255`, `blank=True`, `null=True`) - Stores the Expo push notification token for the user's device, used to send alerts.
+* `reset_pin` (`CharField`, `max_length=6`, `blank=True`, `null=True`) - Temporary 6-digit OTP used for password reset verification.
+* `reset_pin_expires` (`DateTimeField`, `blank=True`, `null=True`) - Expiration timestamp for the password reset OTP (typically 15 minutes).
 * `created_at` (`DateTimeField`, `auto_now_add=True`)
 * `updated_at` (`DateTimeField`, `auto_now=True`)
 
@@ -77,5 +79,5 @@ Allows users to submit ideas or report bugs.
 4.  **Chat Security & Features**: Messages are accessed via REST API (Short Polling on the frontend). The API strictly enforces that only users present in `match.participants` or the `match.organizer` can read or write messages for that specific match. Unauthorized access returns 403 Forbidden. Senders can Edit or Delete their own messages.
 5.  **Rematch Feature (Повторить матч)**: Organizers and participants can create a copy of an existing match with a new `target_start_time`. The API strictly enforces `Time Overlap Validation` (based on `fields_breakdown`) before allowing the creation. Upon successful creation, the backend automatically posts a system message (acting as an invite card) to the original match chat, linking the players to the newly created game.
 6.  **Client Payload Handling**: Failed validations will return clear error structures (e.g., `{ "error": "Match is full" }` or `{ "non_field_errors": ["..."] }`) that React Native gracefully handles visually with user-friendly alerts.
-7.  **Authentication & Security**: The frontend securely stores JWT tokens using `expo-secure-store`. Users can change their passwords securely via the `/api/change-password/` endpoint.
+7.  **Authentication & Security**: The frontend securely stores JWT tokens using `expo-secure-store`. Authenticated users can change their passwords securely via `/api/change-password/`. Unauthenticated users can recover their accounts via a 6-digit OTP (PIN) sent to their email using `/api/password-reset/request/` and `/api/password-reset/confirm/`.
 8.  **Localization**: The React Native frontend is localized to support English (en) and Ukrainian (uk) out of the box.

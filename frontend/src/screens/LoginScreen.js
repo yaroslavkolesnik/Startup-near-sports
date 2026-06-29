@@ -49,6 +49,15 @@ export default function LoginScreen({ navigation }) {
         />
 
         <TouchableOpacity 
+          style={{ alignItems: 'center', marginTop: 16 }}
+          onPress={() => navigation.navigate('ForgotPassword')}
+        >
+          <Text style={{ color: theme.colors.primary, ...theme.typography.bodyMedium }}>
+            Забули пароль?
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
           style={styles.linkContainer}
           onPress={() => navigation.navigate('Register')}
           activeOpacity={0.6}

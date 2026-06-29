@@ -240,3 +240,45 @@ export const changePassword = async (oldPassword, newPassword) => {
 
   return response.json();
 };
+
+export const requestPasswordReset = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/password-reset/request/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Помилка скидання пароля';
+    try {
+      const errorData = await response.json();
+      if (errorData.error) errorMessage = errorData.error;
+      else if (errorData.detail) errorMessage = errorData.detail;
+    } catch (e) {}
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+export const confirmPasswordReset = async (email, pinCode, newPassword) => {
+  const response = await fetch(`${API_BASE_URL}/password-reset/confirm/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, pin_code: pinCode, new_password: newPassword }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Помилка зміни пароля';
+    try {
+      const errorData = await response.json();
+      if (errorData.error) errorMessage = errorData.error;
+      else if (errorData.detail) errorMessage = errorData.detail;
+      else if (errorData.new_password) errorMessage = errorData.new_password[0];
+      else if (errorData.pin_code) errorMessage = errorData.pin_code[0];
+    } catch (e) {}
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
