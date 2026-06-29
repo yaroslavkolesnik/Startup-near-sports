@@ -100,14 +100,14 @@ export default function ProfileScreen({ navigation }) {
         />
 
         <Button 
-          title="Змінити пароль"
+          title={t('change_password_btn')}
           variant="secondary"
           onPress={() => navigation.navigate('ChangePassword')}
           style={{ marginBottom: 12 }}
         />
 
         <Button 
-          title="Зв'язатися з адміністратором"
+          title={t('contact_admin_btn')}
           variant="secondary"
           onPress={() => navigation.navigate('Feedback')}
           style={{ marginBottom: 12 }}

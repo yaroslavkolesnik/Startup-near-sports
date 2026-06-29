@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { requestPasswordReset } from '../api/auth';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 
 export default function ForgotPasswordScreen({ navigation }) {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
         if (!email) {
-            Alert.alert('Помилка', 'Введіть email');
+            Alert.alert(t('error_title'), t('error_fill_email'));
             return;
         }
 
         setLoading(true);
         try {
             await requestPasswordReset(email);
-            Alert.alert('Успіх', 'Код відправлено на ваш email', [
+            Alert.alert(t('success'), t('success_code_sent'), [
                 { text: 'OK', onPress: () => navigation.navigate('ResetPasswordConfirm', { email }) }
             ]);
         } catch (error) {
-            Alert.alert('Помилка', error.message || 'Не вдалося відправити запит');
+            Alert.alert(t('error_title'), error.message || 'Не вдалося відправити запит');
         } finally {
             setLoading(false);
         }
@@ -31,8 +33,8 @@ export default function ForgotPasswordScreen({ navigation }) {
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
             <View style={styles.formContainer}>
-                <Text style={styles.title}>Відновлення пароля</Text>
-                <Text style={styles.subtitle}>Введіть email, на який зареєстровано акаунт</Text>
+                <Text style={styles.title}>{t('nav_forgot_password')}</Text>
+                <Text style={styles.subtitle}>{t('forgot_password_subtitle')}</Text>
 
                 <Input
                     placeholder="Email"
@@ -43,7 +45,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 />
 
                 <Button 
-                    title="Надіслати код"
+                    title={t('send_code_btn')}
                     onPress={handleSubmit}
                     loading={loading}
                     disabled={loading}
@@ -51,7 +53,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 />
 
                 <Button 
-                    title="Назад"
+                    title={t('back_btn')}
                     variant="secondary"
                     onPress={() => navigation.goBack()}
                     style={{ marginTop: 16 }}

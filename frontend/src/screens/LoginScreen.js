@@ -53,7 +53,7 @@ export default function LoginScreen({ navigation }) {
           onPress={() => navigation.navigate('ForgotPassword')}
         >
           <Text style={{ color: theme.colors.primary, ...theme.typography.bodyMedium }}>
-            Забули пароль?
+            {t('forgot_password_btn')}
           </Text>
         </TouchableOpacity>
 

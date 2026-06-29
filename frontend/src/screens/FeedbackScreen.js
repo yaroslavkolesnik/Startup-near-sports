@@ -5,11 +5,7 @@ import { theme } from '../theme';
 import Button from '../components/ui/Button';
 import { sendFeedback } from '../api/users';
 
-const CATEGORIES = [
-  { id: 'BUG', label: 'Помилка (BUG)' },
-  { id: 'IDEA', label: 'Ідея (IDEA)' },
-  { id: 'OTHER', label: 'Інше (OTHER)' }
-];
+const CATEGORIES = ['BUG', 'IDEA', 'OTHER'];
 
 export default function FeedbackScreen({ navigation }) {
   const { t } = useTranslation();
@@ -19,7 +15,7 @@ export default function FeedbackScreen({ navigation }) {
 
   const handleSend = async () => {
     if (!text.trim()) {
-      Alert.alert('Помилка', 'Будь ласка, введіть текст повідомлення.');
+      Alert.alert(t('error_title'), t('error_empty_feedback'));
       return;
     }
 
@@ -27,12 +23,12 @@ export default function FeedbackScreen({ navigation }) {
     try {
       await sendFeedback(category, text.trim());
       Alert.alert(
-        'Успіх!',
-        "Дякуємо за зворотний зв'язок! 🚀 Ми отримали твоє повідомлення і вже взяли його в роботу. Ти допомагаєш робити наш застосунок кращим!",
+        t('success'),
+        t('success_feedback_desc'),
         [{ text: 'ОК', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert('Помилка', error.message || 'Помилка відправки. Спробуйте пізніше.');
+      Alert.alert(t('error_title'), error.message || t('error_send_feedback'));
     } finally {
       setIsLoading(false);
     }
@@ -46,30 +42,30 @@ export default function FeedbackScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text style={styles.descriptionText}>
-          Ця форма створена для того, щоб ви могли підказати, що змінити або додати в наш застосунок для покращення його роботи.
+          {t('feedback_desc')}
         </Text>
 
-        <Text style={styles.sectionTitle}>Категорія</Text>
+        <Text style={styles.sectionTitle}>{t('category_label')}</Text>
         <View style={styles.categoriesContainer}>
           {CATEGORIES.map((cat) => (
             <TouchableOpacity
-              key={cat.id}
-              style={[styles.categoryPill, category === cat.id && styles.categoryPillActive]}
-              onPress={() => setCategory(cat.id)}
+              key={cat}
+              style={[styles.categoryPill, category === cat && styles.categoryPillActive]}
+              onPress={() => setCategory(cat)}
             >
-              <Text style={[styles.categoryPillText, category === cat.id && styles.categoryPillTextActive]}>
-                {cat.label}
+              <Text style={[styles.categoryPillText, category === cat && styles.categoryPillTextActive]}>
+                {t(`cat_${cat.toLowerCase()}`)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Повідомлення</Text>
+        <Text style={styles.sectionTitle}>{t('message_label')}</Text>
         <TextInput
           style={styles.textInput}
           multiline
           numberOfLines={6}
-          placeholder="Опишіть вашу ідею або знайдену помилку..."
+          placeholder={t('feedback_placeholder')}
           placeholderTextColor={theme.colors.textSecondary}
           value={text}
           onChangeText={setText}
@@ -77,7 +73,7 @@ export default function FeedbackScreen({ navigation }) {
         />
 
         <Button 
-          title={isLoading ? 'Відправка...' : 'Відправити'}
+          title={isLoading ? t('sending_btn') : t('send_btn')}
           onPress={handleSend}
           disabled={isLoading || !text.trim()}
           loading={isLoading}

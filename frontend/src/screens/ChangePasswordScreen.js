@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { changePassword } from '../api/auth';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 
 export default function ChangePasswordScreen({ navigation }) {
+    const { t } = useTranslation();
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,28 +15,28 @@ export default function ChangePasswordScreen({ navigation }) {
 
     const handleSubmit = async () => {
         if (!oldPassword || !newPassword || !confirmPassword) {
-            Alert.alert('Помилка', 'Будь ласка, заповніть всі поля');
+            Alert.alert(t('error_title'), t('error_fill_all_fields'));
             return;
         }
 
         if (newPassword.length < 8) {
-            Alert.alert('Помилка', 'Новий пароль має бути не коротше 8 символів');
+            Alert.alert(t('error_title'), t('password_min_length'));
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            Alert.alert('Помилка', 'Новий пароль та підтвердження не співпадають');
+            Alert.alert(t('error_title'), t('error_passwords_mismatch'));
             return;
         }
 
         setLoading(true);
         try {
             await changePassword(oldPassword, newPassword);
-            Alert.alert('Успіх', 'Пароль успішно змінено', [
+            Alert.alert(t('success'), t('success_password_changed'), [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
         } catch (error) {
-            Alert.alert('Помилка', error.message || 'Не вдалося змінити пароль');
+            Alert.alert(t('error_title'), error.message || 'Не вдалося змінити пароль');
         } finally {
             setLoading(false);
         }
@@ -48,31 +50,31 @@ export default function ChangePasswordScreen({ navigation }) {
         >
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <Input
-                    label="Старий пароль"
-                    placeholder="Введіть старий пароль"
+                    label={t('old_password_label')}
+                    placeholder={t('old_password_placeholder')}
                     secureTextEntry={true}
                     value={oldPassword}
                     onChangeText={setOldPassword}
                 />
                 
                 <Input
-                    label="Новий пароль"
-                    placeholder="Мінімум 8 символів"
+                    label={t('new_password_label')}
+                    placeholder={t('new_password_min_8')}
                     secureTextEntry={true}
                     value={newPassword}
                     onChangeText={setNewPassword}
                 />
                 
                 <Input
-                    label="Підтвердження нового пароля"
-                    placeholder="Повторіть новий пароль"
+                    label={t('confirm_new_password_label')}
+                    placeholder={t('confirm_new_password_placeholder')}
                     secureTextEntry={true}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                 />
 
                 <Button 
-                    title="Зберегти новий пароль"
+                    title={t('save_new_password_btn')}
                     onPress={handleSubmit}
                     loading={loading}
                     disabled={loading}

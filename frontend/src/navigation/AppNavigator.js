@@ -175,12 +175,12 @@ export default function AppNavigator() {
       <Stack.Screen 
         name="Feedback" 
         component={FeedbackScreen} 
-        options={{ title: "Зв'язатися з адміністратором" }} 
+        options={{ title: t('nav_feedback') }} 
       />
       <Stack.Screen 
         name="ChangePassword" 
         component={ChangePasswordScreen} 
-        options={{ title: "Змінити пароль" }} 
+        options={{ title: t('nav_change_password') }} 
       />
     </Stack.Navigator>
   );

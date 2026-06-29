@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { confirmPasswordReset } from '../api/auth';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 
 export default function ResetPasswordConfirmScreen({ route, navigation }) {
+    const { t } = useTranslation();
     const initialEmail = route.params?.email || '';
     const [email, setEmail] = useState(initialEmail);
     const [pinCode, setPinCode] = useState('');
@@ -14,18 +16,18 @@ export default function ResetPasswordConfirmScreen({ route, navigation }) {
 
     const handleSubmit = async () => {
         if (!email || !pinCode || !newPassword) {
-            Alert.alert('Помилка', 'Заповніть всі поля');
+            Alert.alert(t('error_title'), t('error_fill_all_fields'));
             return;
         }
 
         setLoading(true);
         try {
             await confirmPasswordReset(email, pinCode, newPassword);
-            Alert.alert('Успіх', 'Пароль успішно змінено', [
+            Alert.alert(t('success'), t('success_password_changed'), [
                 { text: 'OK', onPress: () => navigation.navigate('Login') }
             ]);
         } catch (error) {
-            Alert.alert('Помилка', error.message || 'Не вдалося змінити пароль');
+            Alert.alert(t('error_title'), error.message || 'Не вдалося змінити пароль');
         } finally {
             setLoading(false);
         }
@@ -34,8 +36,8 @@ export default function ResetPasswordConfirmScreen({ route, navigation }) {
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
             <View style={styles.formContainer}>
-                <Text style={styles.title}>Введення коду</Text>
-                <Text style={styles.subtitle}>Введіть 6-значний код з email та новий пароль</Text>
+                <Text style={styles.title}>{t('nav_reset_password_confirm')}</Text>
+                <Text style={styles.subtitle}>{t('code_entry_subtitle')}</Text>
 
                 <Input
                     placeholder="Email"
@@ -46,7 +48,7 @@ export default function ResetPasswordConfirmScreen({ route, navigation }) {
                 />
 
                 <Input
-                    placeholder="PIN-код"
+                    placeholder={t('pin_code_placeholder')}
                     value={pinCode}
                     onChangeText={setPinCode}
                     keyboardType="numeric"
@@ -54,14 +56,14 @@ export default function ResetPasswordConfirmScreen({ route, navigation }) {
                 />
 
                 <Input
-                    placeholder="Новий пароль"
+                    placeholder={t('new_password_placeholder')}
                     value={newPassword}
                     onChangeText={setNewPassword}
                     secureTextEntry
                 />
 
                 <Button 
-                    title="Змінити пароль"
+                    title={t('change_password_btn')}
                     onPress={handleSubmit}
                     loading={loading}
                     disabled={loading}
@@ -69,7 +71,7 @@ export default function ResetPasswordConfirmScreen({ route, navigation }) {
                 />
 
                 <Button 
-                    title="Назад до входу"
+                    title={t('back_to_login_btn')}
                     variant="secondary"
                     onPress={() => navigation.navigate('Login')}
                     style={{ marginTop: 16 }}

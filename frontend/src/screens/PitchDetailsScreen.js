@@ -227,7 +227,7 @@ export default function PitchDetailsScreen({ route, navigation }) {
           <View style={styles.closedBanner}>
             <Ionicons name="warning" size={24} color="#FFF" style={{ marginRight: 8 }} />
             <Text style={styles.closedBannerText}>
-              Площадка временно закрыта{pitch.status_message ? `: ${pitch.status_message}` : ''}
+              {t('pitch_temporarily_closed')}{pitch.status_message ? `: ${pitch.status_message}` : ''}
             </Text>
           </View>
         )}
